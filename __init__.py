@@ -9,5 +9,5 @@ NODE_CLASS_MAPPINGS = {
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "F5TTSAudioInputs":   "🇹🇭 F5‑TTS‑TH รับข้อมูลจาก Inputs 🇹🇭",
-    "SaveAudioAndText":  "💾 บันทึกเสียงและข้อความ",
+    "SaveAudioAndText": "💾 🇹🇭 Save Audio & Text TH",
 }

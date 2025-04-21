@@ -104,7 +104,7 @@ class F5TTSAudioInputs:
 
     RETURN_TYPES = ("AUDIO",)
     FUNCTION = "create"
-    CATEGORY = "🇹🇭 Thai / Audio"
+    CATEGORY = "🇹🇭 Thai TTS"
 
     def create(self, sample_audio, sample_text, speech, model_name="model_475000_FP16.pt", seed=-1, speed=1.0):
         waveform = sample_audio["waveform"]
