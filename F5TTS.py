@@ -99,29 +99,29 @@ class F5TTSAudioInputs:
         sample_rate = sample_audio["sample_rate"]
         print(f"📥 Received waveform shape: {waveform.shape}")
 
-        # 🛡 Ensure waveform is 2D: (channels, samples)
+        if waveform.ndim == 3:
+            print(f"🔄 Detected 3D waveform, squeezing...")
+            waveform = waveform.squeeze()
+            print(f"🔽 After squeeze: {waveform.shape}")
+
         if waveform.ndim == 1:
             waveform = waveform.unsqueeze(0)
             print(f"↪️ Converted 1D to 2D: {waveform.shape}")
         elif waveform.ndim == 2 and waveform.shape[0] > waveform.shape[1]:
             waveform = waveform.transpose(0, 1)
-            print(f"🔄 Transposed waveform to (channels, samples): {waveform.shape}")
-        elif waveform.ndim > 2:
-            waveform = waveform.squeeze()
-            print(f"🔽 Squeezed waveform to reduce dims: {waveform.shape}")
+            print(f"🔀 Transposed waveform to (channels, samples): {waveform.shape}")
 
         if waveform.ndim != 2:
             raise RuntimeError(f"❌ Input waveform must be 2D (channels, samples). Got shape: {waveform.shape}")
 
-        # 💾 Save to temp .wav
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
             torchaudio.save(tmp.name, waveform, sample_rate)
             tmp_path = tmp.name
-            print(f"💾 Saved temp WAV: {tmp_path}")
+            print(f"📂 Saved temp WAV: {tmp_path}")
 
         voice = F5TTSThai.load_voice(tmp_path, sample_text)
         os.unlink(tmp_path)
-        print("🧠 Voice reference loaded. Proceeding to generate speech...")
+        print("🧐 Voice reference loaded. Proceeding to generate speech...")
         audio = F5TTSThai().generate(voice, speech, seed, speed, model_name)
 
         return (audio,)
