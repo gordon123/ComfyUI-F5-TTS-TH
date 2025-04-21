@@ -1,31 +1,30 @@
 # ComfyUI-F5-TTS-TH: Thai-only TTS node
-from pathlib import Path
 import os
 import sys
 import tempfile
 import torch
 import torchaudio
 import numpy as np
-import re
+from pathlib import Path
 from omegaconf import OmegaConf
 import comfy
 from comfy.utils import ProgressBar
 from cached_path import cached_path
 from .Install import Install
 
-# Ensure the Thai submodule is initialized (contains ckpts/thai/...)
+# Ensure the Thai submodule is initialized
 Install.check_install()
 
-# Add F5-TTS-THAI source to Python path for imports
+# Add F5-TTS-THAI source to Python path
 f5tts_src = os.path.join(Install.f5TTSPath, "src")
 sys.path.insert(0, f5tts_src)
-from f5_tts.model import DiT                  # noqa: E402
+from f5_tts.model import DiT
 from f5_tts.infer.utils_infer import (
     load_model,
     load_vocoder,
     preprocess_ref_audio_text,
     infer_process
-)                                            # noqa: E402
+)
 sys.path.pop(0)
 
 TOOLTIP_SEED = "Seed. -1 = random"
@@ -34,23 +33,21 @@ TOOLTIP_SPEED = "Speed. >1.0 slower. <1.0 faster"
 class F5TTSThai:
     @staticmethod
     def load_voice(ref_audio, ref_text):
-        # Prepare reference audio and text
         ref_audio, ref_text = preprocess_ref_audio_text(ref_audio, ref_text)
         return {"ref_audio": ref_audio, "ref_text": ref_text}
 
     def load_model_thai(self):
-        # Download or load checkpoint and vocab via cached_path
         ckpt_url  = "hf://VIZINTZOR/F5-TTS-THAI/model_475000_FP16.pt"
         vocab_url = "hf://VIZINTZOR/F5-TTS-THAI/vocab.txt"
-        ckpt  = str(cached_path(ckpt_url))
-        vocab = str(cached_path(vocab_url))
-        # Load base config for F5-TTS
-        cfg_path  = os.path.join(Install.f5TTSPath, "src/f5_tts/configs/F5TTS_Base.yaml")
+        ckpt_path = str(cached_path(ckpt_url))
+        vocab_path = str(cached_path(vocab_url))
+        cfg_path = os.path.join(Install.f5TTSPath, "src/f5_tts/configs/F5TTS_Base.yaml")
         model_cfg = OmegaConf.load(cfg_path).model.arch
-        # Instantiate model and vocoder
-        model   = load_model(DiT, model_cfg, ckpt, vocab, mel_spec_type="vocos")
+
+        model = load_model(DiT, model_cfg, ckpt_path, vocab_file=vocab_path, mel_spec_type="vocos")
         vocoder = load_vocoder("vocos")
-        device  = comfy.model_management.get_torch_device()
+
+        device = comfy.model_management.get_torch_device()
         if torch.cuda.is_available():
             model = model.half().to(device)
             vocoder = vocoder.half().to(device)
@@ -68,8 +65,11 @@ class F5TTSThai:
             model, vocoder=vocoder, mel_spec_type=mel_spec,
             device=comfy.model_management.get_torch_device()
         )
-        waveform = torch.from_numpy(audio).unsqueeze(0)
+        waveform = torch.from_numpy(audio)
+        if waveform.ndim == 1:
+            waveform = waveform.unsqueeze(0)  # Ensure it's 2D
         return {"waveform": waveform, "sample_rate": sample_rate}
+
 
 class F5TTSAudioInputs:
     @classmethod
@@ -87,8 +87,12 @@ class F5TTSAudioInputs:
     CATEGORY = "audio"
 
     def create(self, sample_audio, sample_text, speech, seed=-1, speed=1.0):
+        waveform = sample_audio["waveform"]
+        sample_rate = sample_audio["sample_rate"]
+        if waveform.ndim == 1:
+            waveform = waveform.unsqueeze(0)
         tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
-        torchaudio.save(tmp.name, sample_audio["waveform"], sample_audio["sample_rate"])
+        torchaudio.save(tmp.name, waveform, sample_rate)
         voice = F5TTSThai.load_voice(tmp.name, sample_text)
         os.unlink(tmp.name)
         audio = F5TTSThai().generate(voice, speech, seed, speed)
