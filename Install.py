@@ -1,9 +1,7 @@
-import subprocess
-import os.path
-
+import subprocess, sys, os
 
 class Install:
-    f5TTSPath = os.path.join(os.path.dirname(__file__), "F5-TTS")
+    f5TTSPath = os.path.join(os.path.dirname(__file__), "F5-TTS-THAI")
 
     @staticmethod
     def has_submodule_file():
@@ -16,30 +14,34 @@ class Install:
 
     @staticmethod
     def install():
-        print("F5TTS. Checking out submodules")
+        print("F5-TTS-THAI: Initializing Thai TTS submodule")
         try:
             import pygit2
-            repo_path = os.path.join(os.path.dirname(__file__))
-            repo = pygit2.Repository(repo_path)
-            submodules = pygit2.submodules.SubmoduleCollection(repo)
-            submodules.update(init=True)
+            repo = pygit2.Repository(os.path.dirname(__file__))
+            pygit2.submodules.SubmoduleCollection(repo).update(init=True)
         except Exception as e:
             print(f"pygit2 failed: {e}")
         subprocess.run(
             ['git', 'submodule', 'update', '--init', '--recursive'],
             cwd=os.path.dirname(__file__),
-            shell=True,
-            )
+            check=True,
+        )
         if not Install.has_submodule_file():
-            print("F5TTS. Something is wrong with your git installation.  It is unable to checkout submodules.  You can install the latest from https://git-scm.com/downloads")  # noqa: E501
+            print("F5TTS. Something is wrong …")
+        else:
+            Install.install_requirements()
 
     @staticmethod
-    def clone():
+    def install_requirements():
+        print("F5-TTS-THAI: Installing requirements")
         subprocess.run(
-            [
-                "git", "clone", "--depth", "1",
-                "https://github.com/SWivid/F5-TTS",
-                "F5-TTS"
-            ],
-            cwd=os.path.dirname(__file__)
-            )
+            [sys.executable, "-m", "pip", "install", "-r",
+             os.path.join(Install.f5TTSPath, 'requirements.txt')],
+            cwd=Install.f5TTSPath,
+            check=True,
+        )
+
+    @staticmethod
+    def has_model_file():
+        path = os.path.join(Install.f5TTSPath, "ckpts", "thai", "model_475000_FP16.pt")
+        return os.path.exists(path)
