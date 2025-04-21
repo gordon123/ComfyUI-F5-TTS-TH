@@ -81,7 +81,7 @@ class F5TTSThai:
             model, vocoder=vocoder, mel_spec_type=mel_spec,
             device=comfy.model_management.get_torch_device()
         )
-        waveform = torch.from_numpy(audio)
+        waveform = torch.from_numpy(audio).float().cpu()
         print(f"📦 Generated waveform shape: {waveform.shape}")
         if waveform.ndim == 1:
             waveform = waveform.unsqueeze(0)
@@ -107,7 +107,7 @@ class F5TTSAudioInputs:
     CATEGORY = "🇹🇭 Thai TTS"
 
     def create(self, sample_audio, sample_text, speech, model_name="model_475000_FP16.pt", seed=-1, speed=1.0):
-        waveform = sample_audio["waveform"]
+        waveform = sample_audio["waveform"].float().cpu()
         sample_rate = sample_audio["sample_rate"]
         print(f"📅 Received waveform shape: {waveform.shape}")
 
