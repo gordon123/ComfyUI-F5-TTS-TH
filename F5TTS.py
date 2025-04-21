@@ -40,7 +40,7 @@ class F5TTSThai:
 
     @staticmethod
     def get_available_models():
-        return tuple(F5TTSThai.available_models)
+        return F5TTSThai.available_models
 
     @staticmethod
     def load_voice(ref_audio, ref_text):
@@ -115,7 +115,14 @@ class F5TTSThai:
 class F5TTSAudioInputs:
     @classmethod
     def INPUT_TYPES(cls):
-        model_choices = F5TTSThai.get_available_models()
+        # 🔧 ใช้ค่าคงที่เพื่อให้ dropdown แสดงตัวเลือกแม้ยังไม่ดาวน์โหลด
+        model_choices = [
+            "model_475000.pt",
+            "model_475000_FP16.pt",
+            "model_500000.pt",
+            "model_500000_FP16.pt"
+        ]
+        print("📃 Available model choices:", model_choices)
         return {"required": {
             "sample_audio": ("AUDIO",),
             "sample_text":  ("STRING", {"default": "Text of sample_audio"}),
