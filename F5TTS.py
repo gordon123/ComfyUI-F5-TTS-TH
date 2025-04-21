@@ -45,7 +45,23 @@ class F5TTSThai:
         print(f"🎯 Loading model: {model_name}")
         model_path = os.path.join(Install.f5TTSPath, "ckpts", "thai", model_name)
         vocab_path = os.path.join(Install.f5TTSPath, "ckpts", "thai", "vocab.txt")
-        cfg_path = os.path.join(Install.f5TTSPath, "src/f5_tts/configs/F5TTS_Base.yaml")
+        
+        # Try multiple possible config filenames
+        cfg_candidates = [
+            "F5TTS_Base.yaml",
+            "F5TTS_Base_train.yaml"
+        ]
+        cfg_path = None
+        for candidate in cfg_candidates:
+            potential_path = os.path.join(Install.f5TTSPath, "src/f5_tts/configs", candidate)
+            if os.path.exists(potential_path):
+                cfg_path = potential_path
+                print(f"✅ Found config: {cfg_path}")
+                break
+
+        if cfg_path is None:
+            raise FileNotFoundError("❌ ไม่พบไฟล์ config ที่ต้องใช้สำหรับโหลดโมเดล F5-TTS")
+
         model_cfg = OmegaConf.load(cfg_path).model.arch
 
         model = load_model(DiT, model_cfg, model_path, vocab_file=vocab_path, mel_spec_type="vocos")
