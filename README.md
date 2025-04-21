@@ -42,7 +42,7 @@ git clone https://github.com/gordon123/ComfyUI-F5-TTS-TH.git
 
 ## 🚀 วิธีติดตั้ง (Installation)
 
-### 🔧 1. Clone repository และติดตั้ง F5-TTS-THAI (แบบ submodule)
+### 🔧 2. Clone repository และติดตั้ง F5-TTS-THAI (แบบ submodule)
 
 ```
 git clone https://github.com/yourname/ComfyUI-F5-TTS-TH.git
@@ -50,20 +50,20 @@ cd ComfyUI-F5-TTS-TH
 git submodule update --init --recursive
 ```
 
-# 1. สร้าง virtual env 
+# 3. สร้าง virtual env 
 ```
 python -m venv venv
 source venv/bin/activate  # หรือ call venv/Scripts/activate บน Windows
 ```
-# 2. อัปเกรด pip
+# 4. อัปเกรด pip
 ```
 pip install --upgrade pip
 ```
-# 3. ติดตั้งทุก dependencies 
+# 5. ติดตั้งทุก dependencies 
 ```
 pip install -r requirements.txt
 ```
-# 4. ติดตั้ง ffmpeg
+# 6. ติดตั้ง ffmpeg
 ```
 apt update && apt install -y ffmpeg
 ```
