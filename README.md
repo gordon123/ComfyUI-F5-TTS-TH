@@ -67,5 +67,14 @@ pip install -r requirements.txt
 ```
 apt update && apt install -y ffmpeg
 ```
+## 🔧 Custom Node ที่แนะนำให้ติดตั้งเพิ่มเติม
+
+| ชื่อ Node | ใช้ทำอะไร | ลิงก์ |
+|-----------|------------|-------|
+| **rgthree-comfy** | ระบบ UI Manager + ฟีเจอร์จัด Node เป็นกลุ่ม, ตัวเลือก dropdown, dynamic inputs | [github.com/rgthree/rgthree-comfy](https://github.com/rgthree/rgthree-comfy) |
+| **ComfyUI Web Viewer** | ใช้ `VrchAudioSaverNode` สำหรับบันทึกเสียงพร้อม metadata ถูกต้อง ไม่เจอ codec error | [github.com/VrchStudio/comfyui-web-viewer](https://github.com/VrchStudio/comfyui-web-viewer) |
+| **ComfyUI Whisper** | แปลงเสียงเป็นข้อความ (speech-to-text) รองรับภาษาไทย | [github.com/ltdrdata/ComfyUI-Whisper](https://github.com/ltdrdata/ComfyUI-Whisper) |
+
+---
 
 
