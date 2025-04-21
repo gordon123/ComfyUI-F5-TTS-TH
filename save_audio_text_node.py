@@ -15,7 +15,7 @@ class SaveAudioAndText:
 
     RETURN_TYPES = ()
     FUNCTION = "save_both"
-    CATEGORY = "🇹🇭 Thai / Audio"
+    CATEGORY = "🇹🇭 Thai TTS"
 
     def save_both(self, audio, text, filename_prefix):
         # 🔐 ป้องกัน path
