@@ -13,10 +13,10 @@ class SaveAudioAndText:
             }
         }
 
-    RETURN_TYPES = ("STRING",)  # เพื่อให้ node ไม่ถูกข้าม
+    RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("log",)
     FUNCTION = "save_both"
-    CATEGORY = "🇹🇭 Thai / Audio"
+    CATEGORY = "🇹🇭 Thai TTS"
 
     def save_both(self, audio, text, filename_prefix):
         output_dir = "/workspace/ComfyUI/output/audio_output"
@@ -25,22 +25,18 @@ class SaveAudioAndText:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         base_name = f"{filename_prefix}_{timestamp}"
 
-        waveform = audio.get("waveform")
-        sample_rate = audio.get("sample_rate")
-
-        if waveform is None or waveform.numel() == 0:
-            log = "❌ ไม่พบข้อมูล waveform หรือ waveform ว่างเปล่า"
-            print(log)
-            return (log,)
-
-        print(f"🎧 Preparing to save waveform with shape: {waveform.shape} and sample rate: {sample_rate}")
+        # Save .wav
         audio_path = os.path.join(output_dir, f"{base_name}.wav")
-        torchaudio.save(audio_path, waveform.float().cpu(), sample_rate, format="wav")
+        waveform = audio["waveform"].float().cpu()
+        sample_rate = audio["sample_rate"]
+        torchaudio.save(audio_path, waveform, sample_rate, format="wav")
         print(f"✅ WAV saved at: {audio_path}")
 
+        # Save .txt
         text_path = os.path.join(output_dir, f"{base_name}.txt")
         with open(text_path, "w", encoding="utf-8") as f:
             f.write(text.strip())
         print(f"✅ TXT saved at: {text_path}")
 
-        return (f"✅ Saved to: {audio_path} & {text_path}",)
+        # ✅ Return dummy output to force execution
+        return (f"✅ Saved: {audio_path}, {text_path}",)
