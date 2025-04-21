@@ -31,3 +31,33 @@ _เสียงไทยที่เท่จนต้องเบิ้ลห�
 ```bash
 cd ComfyUI/custom_nodes/
 git clone https://github.com/gordon123/ComfyUI-F5-TTS-TH.git
+
+
+# 🎤 ComfyUI-F5-TTS-TH 🇹🇭
+
+โมดูล Custom Node สำหรับ ComfyUI ที่ให้คุณสามารถใช้โมเดล F5-TTS-THAI ทำ Text-to-Speech (TTS) ภาษาไทย ได้โดยตรง 🎶  
+ใช้โมเดลจาก [F5-TTS-THAI (VYNCX)](https://github.com/VYNCX/F5-TTS-THAI) ซึ่งถูกฝึกมาสำหรับเสียงภาษาไทยโดยเฉพาะ  
+
+---
+
+## 🚀 วิธีติดตั้ง (Installation)
+
+### 🔧 1. Clone repository และติดตั้ง F5-TTS-THAI (แบบ submodule)
+
+```
+git clone https://github.com/yourname/ComfyUI-F5-TTS-TH.git
+cd ComfyUI-F5-TTS-TH
+git submodule update --init --recursive
+```
+
+# 1. สร้าง virtualenv (แนะนำ)
+python3 -m venv venv
+source venv/bin/activate  # หรือ call venv/Scripts/activate บน Windows
+
+# 2. อัปเกรด pip
+pip install --upgrade pip
+
+# 3. ติดตั้งทุก dependencies ด้วยกำแพงหนา ๆ
+pip install -r requirements.txt
+
+
