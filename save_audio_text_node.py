@@ -1,7 +1,7 @@
 import os
-import io
 import torchaudio
 from datetime import datetime
+import io
 
 class SaveAudioAndText:
     @classmethod
@@ -11,6 +11,7 @@ class SaveAudioAndText:
                 "audio": ("AUDIO",),
                 "text": ("STRING", {"multiline": True}),
                 "filename_prefix": ("STRING", {"default": "F5TTSTH"}),
+                "extension": (["wav", "flac", "mp3"], {"default": "wav"}),
             }
         }
 
@@ -19,39 +20,37 @@ class SaveAudioAndText:
     FUNCTION = "save_both"
     CATEGORY = "🇹🇭 Thai TTS"
 
-    def save_both(self, audio, text, filename_prefix):
+    def save_both(self, audio, text, filename_prefix, extension):
         output_dir = "/workspace/ComfyUI/output/audio_output"
         os.makedirs(output_dir, exist_ok=True)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         base_name = f"{filename_prefix}_{timestamp}"
+        file_name = f"{base_name}.{extension}"
+        full_path = os.path.join(output_dir, file_name)
 
-        audio_path = os.path.join(output_dir, f"{base_name}.wav")
-        text_path = os.path.join(output_dir, f"{base_name}.txt")
-
-        waveform = audio["waveform"].float().cpu()
+        waveform = audio["waveform"]
         sample_rate = audio["sample_rate"]
 
-        # Ensure waveform is 2D (channels, samples)
-        if waveform.ndim == 1:
-            waveform = waveform.unsqueeze(0)
-        elif waveform.ndim == 3:
+        # force mono
+        if waveform.dim() == 3:
             waveform = waveform.squeeze()
         if waveform.shape[0] > 1:
-            print("⚠️ Multi-channel detected. Saving only the first channel.")
             waveform = waveform[:1, :]
-
-        # ✅ Use BytesIO for safety, then save to disk
+        
+        # Save audio to BytesIO, then write it manually
         buff = io.BytesIO()
-        torchaudio.save(buff, waveform, sample_rate, format="wav")
+        torchaudio.save(buff, waveform.float().cpu(), sample_rate, format=extension.upper())
         buff.seek(0)
 
-        with open(audio_path, "wb") as f:
+        with open(full_path, 'wb') as f:
             f.write(buff.getvalue())
-        print(f"✅ WAV saved at: {audio_path}")
+        print(f"✅ Audio saved: {full_path}")
 
-        with open(text_path, "w", encoding="utf-8") as f:
+        # Save text
+        txt_path = os.path.join(output_dir, f"{base_name}.txt")
+        with open(txt_path, "w", encoding="utf-8") as f:
             f.write(text.strip())
-        print(f"✅ TXT saved at: {text_path}")
+        print(f"✅ Text saved: {txt_path}")
 
         return (audio,)
