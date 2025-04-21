@@ -42,11 +42,10 @@ class F5TTSThai:
         return {"ref_audio": ref_audio, "ref_text": ref_text}
 
     def load_model_thai(self, model_name="model_475000_FP16.pt"):
-        print(f"🎯 Loading model: {model_name}")
+        print(f"🌟 Loading model: {model_name}")
         model_path = os.path.join(Install.f5TTSPath, "ckpts", "thai", model_name)
         vocab_path = os.path.join(Install.f5TTSPath, "ckpts", "thai", "vocab.txt")
-        
-        # Try multiple possible config filenames
+
         cfg_candidates = [
             "F5TTS_Base.yaml",
             "F5TTS_Base_train.yaml"
@@ -68,12 +67,9 @@ class F5TTSThai:
         vocoder = load_vocoder("vocos")
 
         device = comfy.model_management.get_torch_device()
-        if torch.cuda.is_available():
-            model = model.half().to(device)
-            vocoder = vocoder.half().to(device)
-        else:
-            model = model.to(device)
-            vocoder = vocoder.to(device)
+        model = model.to(device)
+        vocoder = vocoder.to(device)
+
         return model, vocoder, "vocos"
 
     def generate(self, voice, text, seed, speed, model_name="model_475000_FP16.pt"):
@@ -113,12 +109,12 @@ class F5TTSAudioInputs:
     def create(self, sample_audio, sample_text, speech, model_name="model_475000_FP16.pt", seed=-1, speed=1.0):
         waveform = sample_audio["waveform"]
         sample_rate = sample_audio["sample_rate"]
-        print(f"📥 Received waveform shape: {waveform.shape}")
+        print(f"📅 Received waveform shape: {waveform.shape}")
 
         if waveform.ndim == 3:
-            print(f"🔄 Detected 3D waveform, squeezing...")
+            print(f"🔀 Detected 3D waveform, squeezing...")
             waveform = waveform.squeeze()
-            print(f"🔽 After squeeze: {waveform.shape}")
+            print(f"📂 After squeeze: {waveform.shape}")
 
         if waveform.ndim == 1:
             waveform = waveform.unsqueeze(0)
