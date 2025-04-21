@@ -13,8 +13,8 @@ class SaveAudioAndText:
             }
         }
 
-    RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("log",)
+    RETURN_TYPES = ("AUDIO",)
+    RETURN_NAMES = ("audio",)
     FUNCTION = "save_both"
     CATEGORY = "🇹🇭 Thai TTS"
 
@@ -38,5 +38,5 @@ class SaveAudioAndText:
             f.write(text.strip())
         print(f"✅ TXT saved at: {text_path}")
 
-        # ✅ Return dummy output to force execution
-        return (f"✅ Saved: {audio_path}, {text_path}",)
+        # ✅ Return audio back so we can connect to other nodes
+        return (audio,)
