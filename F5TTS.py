@@ -88,13 +88,13 @@ class F5TTSAudioInputs:
 
     RETURN_TYPES = ("AUDIO",)
     FUNCTION = "create"
-    CATEGORY = "🇹🇭 Thai / Audio"
+    CATEGORY = "\ud83c\uddf9\ud83c\udded Thai / Audio"
 
     def create(self, sample_audio, sample_text, speech, model_name="model_475000_FP16.pt", seed=-1, speed=1.0):
         waveform = sample_audio["waveform"]
         sample_rate = sample_audio["sample_rate"]
 
-        # 🛡 Ensure waveform is 2D: (channels, samples)
+        # \ud83d\udee1 Ensure waveform is 2D: (channels, samples)
         if waveform.ndim == 1:
             waveform = waveform.unsqueeze(0)
         elif waveform.ndim == 2 and waveform.shape[0] > waveform.shape[1]:
@@ -103,9 +103,9 @@ class F5TTSAudioInputs:
             waveform = waveform.squeeze()
 
         if waveform.ndim != 2:
-            raise RuntimeError(f"❌ Input waveform must be 2D (channels, samples). Got shape: {waveform.shape}")
+            raise RuntimeError(f"\u274c Input waveform must be 2D (channels, samples). Got shape: {waveform.shape}")
 
-        # 💾 Save to temp .wav
+        # \ud83d\udcc2 Save to temp .wav
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
             torchaudio.save(tmp.name, waveform, sample_rate)
             tmp_path = tmp.name
