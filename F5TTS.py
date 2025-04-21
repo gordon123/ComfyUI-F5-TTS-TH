@@ -28,10 +28,10 @@ from f5_tts.infer.utils_infer import (
 )                                            # noqa: E402
 sys.path.pop(0)
 
-class F5TTSThai:
-    tooltip_seed = "Seed. -1 = random"
-    tooltip_speed = "Speed. >1.0 slower. <1.0 faster"
+TOOLTIP_SEED = "Seed. -1 = random"
+TOOLTIP_SPEED = "Speed. >1.0 slower. <1.0 faster"
 
+class F5TTSThai:
     @staticmethod
     def load_voice(ref_audio, ref_text):
         # Prepare reference audio and text
@@ -51,18 +51,18 @@ class F5TTSThai:
         model   = load_model(DiT, model_cfg, ckpt, vocab, mel_spec_type="vocos")
         vocoder = load_vocoder("vocos")
         device  = comfy.model_management.get_torch_device()
-        # Move to half precision on GPU
-        model   = model.half().to(device)
-        vocoder = vocoder.half().to(device)
+        if torch.cuda.is_available():
+            model = model.half().to(device)
+            vocoder = vocoder.half().to(device)
+        else:
+            model = model.to(device)
+            vocoder = vocoder.to(device)
         return model, vocoder, "vocos"
 
     def generate(self, voice, text, seed, speed):
-        # Load Thai-only model
         model, vocoder, mel_spec = self.load_model_thai()
-        # Set seed if provided
         if seed >= 0:
             torch.manual_seed(seed)
-        # Generate waveform
         audio, sample_rate, _ = infer_process(
             voice["ref_audio"], voice["ref_text"], text,
             model, vocoder=vocoder, mel_spec_type=mel_spec,
@@ -78,8 +78,8 @@ class F5TTSAudioInputs:
             "sample_audio": ("AUDIO",),
             "sample_text":  ("STRING", {"default": "Text of sample_audio"}),
             "speech":       ("STRING", {"multiline": True, "default": "สวัสดีครับ"}),
-            "seed":         ("INT",    {"default": -1, "min": -1, "tooltip": F5TTSThai.tooltip_seed}),
-            "speed":        ("FLOAT",  {"default": 1.0, "step": 0.01, "tooltip": F5TTSThai.tooltip_speed}),
+            "seed":         ("INT",    {"default": -1, "min": -1, "tooltip": TOOLTIP_SEED}),
+            "speed":        ("FLOAT",  {"default": 1.0, "step": 0.01, "tooltip": TOOLTIP_SPEED}),
         }}
 
     RETURN_TYPES = ("AUDIO",)
@@ -87,12 +87,9 @@ class F5TTSAudioInputs:
     CATEGORY = "audio"
 
     def create(self, sample_audio, sample_text, speech, seed=-1, speed=1.0):
-        # Save sample_audio to a temporary WAV
         tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
         torchaudio.save(tmp.name, sample_audio["waveform"], sample_audio["sample_rate"])
-        # Prepare voice dict
         voice = F5TTSThai.load_voice(tmp.name, sample_text)
         os.unlink(tmp.name)
-        # Generate Thai speech
         audio = F5TTSThai().generate(voice, speech, seed, speed)
         return (audio,)
