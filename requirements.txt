@@ -27,7 +27,6 @@ torch
 torchaudio
 cached_path
 omegaconf
-comfyui
 deepcut
 pythainlp
 
