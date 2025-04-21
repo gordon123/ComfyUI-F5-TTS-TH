@@ -102,7 +102,8 @@ class F5TTSAudioInputs:
             "speed":        ("FLOAT",  {"default": 1.0, "step": 0.01, "tooltip": TOOLTIP_SPEED}),
         }}
 
-    RETURN_TYPES = ("AUDIO",)
+    RETURN_TYPES = ("AUDIO", "STRING")
+    RETURN_NAMES = ("audio", "text")
     FUNCTION = "create"
     CATEGORY = "🇹🇭 Thai TTS"
 
@@ -140,4 +141,4 @@ class F5TTSAudioInputs:
         print("🧐 Voice reference loaded. Proceeding to generate speech...")
         audio = F5TTSThai().generate(voice, speech, seed, speed, model_name)
 
-        return (audio,)
+        return (audio, speech)
