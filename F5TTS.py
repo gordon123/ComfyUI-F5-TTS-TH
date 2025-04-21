@@ -10,6 +10,7 @@ import comfy
 from comfy.utils import ProgressBar
 from cached_path import cached_path
 from .Install import Install
+import urllib.request
 
 # Ensure the Thai submodule is initialized
 Install.check_install()
@@ -30,10 +31,17 @@ TOOLTIP_SEED = "Seed. -1 = random"
 TOOLTIP_SPEED = "Speed. >1.0 slower. <1.0 faster"
 
 class F5TTSThai:
+    available_models = [
+        "model_475000.pt",
+        "model_475000_FP16.pt",
+        "model_500000.pt",
+        "model_500000_FP16.pt"
+    ]
+
     @staticmethod
     def get_available_models():
-        model_dir = os.path.join(Install.f5TTSPath, "ckpts", "thai")
-        return sorted([f.name for f in Path(model_dir).glob("*.pt")])
+        # ✅ คืนค่ารายชื่อทั้งหมดสำหรับ dropdown ทันที
+        return F5TTSThai.available_models
 
     @staticmethod
     def load_voice(ref_audio, ref_text):
@@ -41,10 +49,27 @@ class F5TTSThai:
         ref_audio, ref_text = preprocess_ref_audio_text(ref_audio, ref_text)
         return {"ref_audio": ref_audio, "ref_text": ref_text}
 
-    def load_model_thai(self, model_name="model_475000_FP16.pt"):
+    def load_model_thai(self, model_name="model_500000_FP16.pt"):
         print(f"🌟 Loading model: {model_name}")
         model_path = os.path.join(Install.f5TTSPath, "ckpts", "thai", model_name)
         vocab_path = os.path.join(Install.f5TTSPath, "ckpts", "thai", "vocab.txt")
+
+        # ✅ ดาวน์โหลดอัตโนมัติถ้ายังไม่มี
+        if not os.path.exists(model_path):
+            print(f"⬇️ Downloading model {model_name}...")
+            urllib.request.urlretrieve(
+                f"https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/{model_name}",
+                model_path
+            )
+            print(f"✅ Model downloaded: {model_name}")
+
+        if not os.path.exists(vocab_path):
+            print("⬇️ Downloading vocab.txt...")
+            urllib.request.urlretrieve(
+                "https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/vocab.txt",
+                vocab_path
+            )
+            print("✅ vocab.txt downloaded.")
 
         cfg_candidates = [
             "F5TTS_Base.yaml",
@@ -59,10 +84,9 @@ class F5TTSThai:
                 break
 
         if cfg_path is None:
-            raise FileNotFoundError("❌ ไม่พบไฟล์ config ที่ต้องใช้สำหรับโหลดโมเดล F5-TTS")
+            raise FileNotFoundError("❌ ไม่พบไฟล์ config สำหรับ F5-TTS")
 
         model_cfg = OmegaConf.load(cfg_path).model.arch
-
         model = load_model(DiT, model_cfg, model_path, vocab_file=vocab_path, mel_spec_type="vocos")
         vocoder = load_vocoder("vocos")
 
@@ -72,7 +96,7 @@ class F5TTSThai:
 
         return model, vocoder, "vocos"
 
-    def generate(self, voice, text, seed, speed, model_name="model_475000_FP16.pt"):
+    def generate(self, voice, text, seed, speed, model_name="model_500000_FP16.pt"):
         model, vocoder, mel_spec = self.load_model_thai(model_name)
         if seed >= 0:
             torch.manual_seed(seed)
@@ -97,7 +121,7 @@ class F5TTSAudioInputs:
             "sample_audio": ("AUDIO",),
             "sample_text":  ("STRING", {"default": "Text of sample_audio"}),
             "speech":       ("STRING", {"multiline": True, "default": "สวัสดีครับ"}),
-            "model_name":   (model_choices, {"default": "model_475000_FP16.pt"}),
+            "model_name":   (model_choices, {"default": "model_500000_FP16.pt"}),
             "seed":         ("INT",    {"default": -1, "min": -1, "tooltip": TOOLTIP_SEED}),
             "speed":        ("FLOAT",  {"default": 1.0, "step": 0.01, "tooltip": TOOLTIP_SPEED}),
         }}
@@ -107,7 +131,7 @@ class F5TTSAudioInputs:
     FUNCTION = "create"
     CATEGORY = "🇹🇭 Thai TTS"
 
-    def create(self, sample_audio, sample_text, speech, model_name="model_475000_FP16.pt", seed=-1, speed=1.0):
+    def create(self, sample_audio, sample_text, speech, model_name="model_500000_FP16.pt", seed=-1, speed=1.0):
         waveform = sample_audio["waveform"].float().contiguous()
         sample_rate = sample_audio["sample_rate"]
         print(f"📅 Received waveform shape: {waveform.shape}")
