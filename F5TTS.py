@@ -4,7 +4,6 @@ import sys
 import tempfile
 import torch
 import torchaudio
-import numpy as np
 from pathlib import Path
 from omegaconf import OmegaConf
 import comfy
@@ -98,17 +97,21 @@ class F5TTSAudioInputs:
         # 🛡 Ensure waveform is 2D: (channels, samples)
         if waveform.ndim == 1:
             waveform = waveform.unsqueeze(0)
+        elif waveform.ndim == 2 and waveform.shape[0] > waveform.shape[1]:
+            waveform = waveform.transpose(0, 1)
         elif waveform.ndim > 2:
             waveform = waveform.squeeze()
 
         if waveform.ndim != 2:
             raise RuntimeError(f"❌ Input waveform must be 2D (channels, samples). Got shape: {waveform.shape}")
 
-        tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
-        torchaudio.save(tmp.name, waveform, sample_rate)
+        # 💾 Save to temp .wav
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+            torchaudio.save(tmp.name, waveform, sample_rate)
+            tmp_path = tmp.name
 
-        voice = F5TTSThai.load_voice(tmp.name, sample_text)
-        os.unlink(tmp.name)
+        voice = F5TTSThai.load_voice(tmp_path, sample_text)
+        os.unlink(tmp_path)
         audio = F5TTSThai().generate(voice, speech, seed, speed, model_name)
 
         return (audio,)
