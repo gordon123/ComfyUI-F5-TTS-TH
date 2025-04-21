@@ -2,7 +2,7 @@
 import torchaudio
 
 # โหลดไฟล์เสียงที่ต้องการทดสอบ
-waveform, sr = torchaudio.load("your_audio.wav")
+waveform, sr = torchaudio.load("testTHmono.wav")
 
 # แสดงรูปร่างของ waveform
 print("✅ waveform shape:", waveform.shape)
