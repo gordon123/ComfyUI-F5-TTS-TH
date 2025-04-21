@@ -86,7 +86,7 @@ class F5TTSThai:
         if waveform.ndim == 1:
             waveform = waveform.unsqueeze(0)
             print(f"↪️ Reshaped to 2D: {waveform.shape}")
-        return {"waveform": waveform, "sample_rate": sample_rate}
+        return {"waveform": waveform, "sample_rate": sample_rate, "text": text}
 
 
 class F5TTSAudioInputs:
@@ -132,7 +132,7 @@ class F5TTSAudioInputs:
             waveform = waveform[:1, :]
 
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-            torchaudio.save(tmp.name, waveform, sample_rate)
+            torchaudio.save(tmp.name, waveform, sample_rate, format="wav", encoding="PCM_S", bits_per_sample=16)
             tmp_path = tmp.name
             print(f"📂 Saved temp WAV: {tmp_path}")
 
