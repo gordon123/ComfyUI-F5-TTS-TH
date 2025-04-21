@@ -1,14 +1,14 @@
 [project]
-name = "comfyui-f5-tts"
-description = "Text to speech with F5-TTS"
-version = "1.0.20"
+name = "ComfyUI-F5-TTS-TH"
+description = "Text to speech สำหรับ ภาษาไทย บน ComfyUI"
+version = "1.0.0a1"
 license = {text = "MIT License"}
 
 [project.urls]
-Repository = "https://github.com/niknah/ComfyUI-F5-TTS"
+Repository = "https://github.com/gordon123/ComfyUI-F5-TTS-TH"
 #  Used by Comfy Registry https://comfyregistry.org
 
 [tool.comfy]
-PublisherId = "niknah"
-DisplayName = "ComfyUI F5-TTS"
-Icon = ""
+PublisherId = "iimate24"
+DisplayName = "ComfyUI-F5-TTS-TH"
+Icon = "icon_F5_TTS_TH.ico"

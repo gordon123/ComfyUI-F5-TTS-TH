@@ -1,32 +1,44 @@
-accelerate>=0.33.0
-bitsandbytes>0.37.0
+# Core PyTorch + Audio backend
+torch==2.3.0+cu118
+torchaudio==2.3.0+cu118
+--extra-index-url https://download.pytorch.org/whl/cu118
+
+# Thai NLP
+pythainlp
+deepcut
+
+# Model config / HuggingFace asset loading
+omegaconf
 cached_path
+
+# Git submodule handling (Install.py)
+pygit2
+
+# Vocoder
+vocos
+
+# Utils & Visualization
+tqdm
+numpy
+matplotlib
+soundfile
+
+# Optional: for saving audio, web interface, CLI tools, and extended training
+gradio
 click
 datasets
-ema_pytorch>=0.5.2
-gradio
 jieba
 librosa
-matplotlib
-numpy
 pydub
 pypinyin
-safetensors
-soundfile
-tomli
-torchdiffeq
-tqdm>=4.65.0
-transformers
-vocos
 wandb
-x_transformers>=1.31.14
-torch-time-stretch
-pygit2
-omegaconf
-torch
-torchaudio
-cached_path
-omegaconf
-deepcut
-pythainlp
+safetensors
+tomli
 
+# Transformer & Trainer
+transformers
+ema_pytorch>=0.5.2
+torchdiffeq
+x_transformers>=1.31.14
+bitsandbytes>0.37.0
+torch-time-stretch

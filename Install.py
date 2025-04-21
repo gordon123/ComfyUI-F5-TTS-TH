@@ -15,12 +15,13 @@ class Install:
 
     @staticmethod
     def install():
-        print("🔧 F5-TTS-THAI: Initializing Thai TTS submodule...")
+        print("🔧 Checking for F5-TTS-THAI model and dependencies...")
         try:
             import pygit2
             repo = pygit2.Repository(os.path.dirname(__file__))
             pygit2.submodules.SubmoduleCollection(repo).update(init=True)
         except Exception as e:
+            print("ℹ️ pygit2 not available, falling back to subprocess git init...")
             print(f"⚠️ pygit2 failed: {e}")
 
         subprocess.run(
