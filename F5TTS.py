@@ -40,8 +40,7 @@ class F5TTSThai:
 
     @staticmethod
     def get_available_models():
-        # ✅ คืนค่ารายชื่อทั้งหมดสำหรับ dropdown ทันที
-        return F5TTSThai.available_models
+        return tuple(F5TTSThai.available_models)
 
     @staticmethod
     def load_voice(ref_audio, ref_text):
@@ -49,12 +48,12 @@ class F5TTSThai:
         ref_audio, ref_text = preprocess_ref_audio_text(ref_audio, ref_text)
         return {"ref_audio": ref_audio, "ref_text": ref_text}
 
-    def load_model_thai(self, model_name="model_500000_FP16.pt"):
+    def load_model_thai(self, model_name="model_475000_FP16.pt"):
         print(f"🌟 Loading model: {model_name}")
         model_path = os.path.join(Install.f5TTSPath, "ckpts", "thai", model_name)
         vocab_path = os.path.join(Install.f5TTSPath, "ckpts", "thai", "vocab.txt")
 
-        # ✅ ดาวน์โหลดอัตโนมัติถ้ายังไม่มี
+        # Auto-download if not exist
         if not os.path.exists(model_path):
             print(f"⬇️ Downloading model {model_name}...")
             urllib.request.urlretrieve(
@@ -84,7 +83,7 @@ class F5TTSThai:
                 break
 
         if cfg_path is None:
-            raise FileNotFoundError("❌ ไม่พบไฟล์ config สำหรับ F5-TTS")
+            raise FileNotFoundError("❌ ไม่พบไฟล์ config ที่ต้องใช้สำหรับโหลดโมเดล F5-TTS")
 
         model_cfg = OmegaConf.load(cfg_path).model.arch
         model = load_model(DiT, model_cfg, model_path, vocab_file=vocab_path, mel_spec_type="vocos")
@@ -96,7 +95,7 @@ class F5TTSThai:
 
         return model, vocoder, "vocos"
 
-    def generate(self, voice, text, seed, speed, model_name="model_500000_FP16.pt"):
+    def generate(self, voice, text, seed, speed, model_name="model_475000_FP16.pt"):
         model, vocoder, mel_spec = self.load_model_thai(model_name)
         if seed >= 0:
             torch.manual_seed(seed)
