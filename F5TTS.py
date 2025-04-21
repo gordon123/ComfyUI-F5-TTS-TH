@@ -32,19 +32,22 @@ TOOLTIP_SPEED = "Speed. >1.0 slower. <1.0 faster"
 
 class F5TTSThai:
     @staticmethod
+    def get_available_models():
+        model_dir = os.path.join(Install.f5TTSPath, "ckpts", "thai")
+        return sorted([f.name for f in Path(model_dir).glob("*.pt")])
+
+    @staticmethod
     def load_voice(ref_audio, ref_text):
         ref_audio, ref_text = preprocess_ref_audio_text(ref_audio, ref_text)
         return {"ref_audio": ref_audio, "ref_text": ref_text}
 
-    def load_model_thai(self):
-        ckpt_url  = "hf://VIZINTZOR/F5-TTS-THAI/model_475000_FP16.pt"
-        vocab_url = "hf://VIZINTZOR/F5-TTS-THAI/vocab.txt"
-        ckpt_path = str(cached_path(ckpt_url))
-        vocab_path = str(cached_path(vocab_url))
+    def load_model_thai(self, model_name="model_475000_FP16.pt"):
+        model_path = os.path.join(Install.f5TTSPath, "ckpts", "thai", model_name)
+        vocab_path = os.path.join(Install.f5TTSPath, "ckpts", "thai", "vocab.txt")
         cfg_path = os.path.join(Install.f5TTSPath, "src/f5_tts/configs/F5TTS_Base.yaml")
         model_cfg = OmegaConf.load(cfg_path).model.arch
 
-        model = load_model(DiT, model_cfg, ckpt_path, vocab_file=vocab_path, mel_spec_type="vocos")
+        model = load_model(DiT, model_cfg, model_path, vocab_file=vocab_path, mel_spec_type="vocos")
         vocoder = load_vocoder("vocos")
 
         device = comfy.model_management.get_torch_device()
@@ -56,8 +59,8 @@ class F5TTSThai:
             vocoder = vocoder.to(device)
         return model, vocoder, "vocos"
 
-    def generate(self, voice, text, seed, speed):
-        model, vocoder, mel_spec = self.load_model_thai()
+    def generate(self, voice, text, seed, speed, model_name="model_475000_FP16.pt"):
+        model, vocoder, mel_spec = self.load_model_thai(model_name)
         if seed >= 0:
             torch.manual_seed(seed)
         audio, sample_rate, _ = infer_process(
@@ -67,33 +70,45 @@ class F5TTSThai:
         )
         waveform = torch.from_numpy(audio)
         if waveform.ndim == 1:
-            waveform = waveform.unsqueeze(0)  # Ensure it's 2D
+            waveform = waveform.unsqueeze(0)
         return {"waveform": waveform, "sample_rate": sample_rate}
 
 
 class F5TTSAudioInputs:
     @classmethod
     def INPUT_TYPES(cls):
+        model_choices = F5TTSThai.get_available_models()
         return {"required": {
             "sample_audio": ("AUDIO",),
             "sample_text":  ("STRING", {"default": "Text of sample_audio"}),
             "speech":       ("STRING", {"multiline": True, "default": "สวัสดีครับ"}),
+            "model_name":   (model_choices, {"default": "model_475000_FP16.pt"}),
             "seed":         ("INT",    {"default": -1, "min": -1, "tooltip": TOOLTIP_SEED}),
             "speed":        ("FLOAT",  {"default": 1.0, "step": 0.01, "tooltip": TOOLTIP_SPEED}),
         }}
 
     RETURN_TYPES = ("AUDIO",)
     FUNCTION = "create"
-    CATEGORY = "audio"
+    CATEGORY = "🇹🇭 Thai / Audio"
 
-    def create(self, sample_audio, sample_text, speech, seed=-1, speed=1.0):
+    def create(self, sample_audio, sample_text, speech, model_name="model_475000_FP16.pt", seed=-1, speed=1.0):
         waveform = sample_audio["waveform"]
         sample_rate = sample_audio["sample_rate"]
+
+        # 🛡 Ensure waveform is 2D: (channels, samples)
         if waveform.ndim == 1:
             waveform = waveform.unsqueeze(0)
+        elif waveform.ndim > 2:
+            waveform = waveform.squeeze()
+
+        if waveform.ndim != 2:
+            raise RuntimeError(f"❌ Input waveform must be 2D (channels, samples). Got shape: {waveform.shape}")
+
         tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
         torchaudio.save(tmp.name, waveform, sample_rate)
+
         voice = F5TTSThai.load_voice(tmp.name, sample_text)
         os.unlink(tmp.name)
-        audio = F5TTSThai().generate(voice, speech, seed, speed)
+        audio = F5TTSThai().generate(voice, speech, seed, speed, model_name)
+
         return (audio,)
