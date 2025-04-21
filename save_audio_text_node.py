@@ -1,6 +1,7 @@
-from datetime import datetime
 import os
+import io
 import torchaudio
+from datetime import datetime
 
 class SaveAudioAndText:
     @classmethod
@@ -9,7 +10,7 @@ class SaveAudioAndText:
             "required": {
                 "audio": ("AUDIO",),
                 "text": ("STRING", {"multiline": True}),
-                "filename_prefix": ("STRING", {"default": "f5tts_output"}),
+                "filename_prefix": ("STRING", {"default": "F5TTSTH"}),
             }
         }
 
@@ -28,31 +29,29 @@ class SaveAudioAndText:
         audio_path = os.path.join(output_dir, f"{base_name}.wav")
         text_path = os.path.join(output_dir, f"{base_name}.txt")
 
-        waveform = audio["waveform"]
+        waveform = audio["waveform"].float().cpu()
         sample_rate = audio["sample_rate"]
 
-        # ✅ บังคับ float32
-        waveform = waveform.float().cpu().contiguous()
-
-        # ✅ Force mono for compatibility
-        if waveform.ndim == 2 and waveform.shape[0] > 1:
-            print("🎧 Force mono: keeping only first channel.")
+        # Ensure waveform is 2D (channels, samples)
+        if waveform.ndim == 1:
+            waveform = waveform.unsqueeze(0)
+        elif waveform.ndim == 3:
+            waveform = waveform.squeeze()
+        if waveform.shape[0] > 1:
+            print("⚠️ Multi-channel detected. Saving only the first channel.")
             waveform = waveform[:1, :]
 
-        # ✅ ใช้ sox_io เพื่อแก้ปัญหา ffmpeg + flac + layout
-        torchaudio.set_audio_backend("sox_io")
+        # ✅ Use BytesIO for safety, then save to disk
+        buff = io.BytesIO()
+        torchaudio.save(buff, waveform, sample_rate, format="wav")
+        buff.seek(0)
 
-        try:
-            torchaudio.save(audio_path, waveform, sample_rate, format="wav")
-            print(f"✅ WAV saved at: {audio_path}")
-        except Exception as e:
-            print(f"❌ Failed to save audio: {e}")
+        with open(audio_path, "wb") as f:
+            f.write(buff.getvalue())
+        print(f"✅ WAV saved at: {audio_path}")
 
-        try:
-            with open(text_path, "w", encoding="utf-8") as f:
-                f.write(text.strip())
-            print(f"✅ TXT saved at: {text_path}")
-        except Exception as e:
-            print(f"❌ Failed to save text: {e}")
+        with open(text_path, "w", encoding="utf-8") as f:
+            f.write(text.strip())
+        print(f"✅ TXT saved at: {text_path}")
 
         return (audio,)
