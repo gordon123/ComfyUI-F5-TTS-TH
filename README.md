@@ -31,7 +31,7 @@ _เสียงไทยที่เท่จนต้องเบิ้ลห�
 ```bash
 cd ComfyUI/custom_nodes/
 git clone https://github.com/gordon123/ComfyUI-F5-TTS-TH.git
-
+```
 
 # 🎤 ComfyUI-F5-TTS-TH 🇹🇭
 
@@ -50,14 +50,22 @@ cd ComfyUI-F5-TTS-TH
 git submodule update --init --recursive
 ```
 
-# 1. สร้าง virtualenv (แนะนำ)
-python3 -m venv venv
+# 1. สร้าง virtual env 
+```
+python -m venv venv
 source venv/bin/activate  # หรือ call venv/Scripts/activate บน Windows
-
+```
 # 2. อัปเกรด pip
+```
 pip install --upgrade pip
-
-# 3. ติดตั้งทุก dependencies ด้วยกำแพงหนา ๆ
+```
+# 3. ติดตั้งทุก dependencies 
+```
 pip install -r requirements.txt
+```
+# 4. ติดตั้ง ffmpeg
+```
+apt update && apt install -y ffmpeg
+```
 
 
