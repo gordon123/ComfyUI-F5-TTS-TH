@@ -23,3 +23,11 @@ x_transformers>=1.31.14
 torch-time-stretch
 pygit2
 omegaconf
+torch
+torchaudio
+cached_path
+omegaconf
+comfyui
+deepcut
+pythainlp
+
