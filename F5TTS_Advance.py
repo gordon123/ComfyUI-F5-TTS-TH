@@ -41,9 +41,30 @@ class F5TTS_Advance:
         "speed": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 5.0, "step": 0.1}),
     }
 
-    @classmethod
+        @classmethod
     def INPUT_TYPES(cls):
-        return {"required": {"sample_audio": ("AUDIO",), "sample_text": ("STRING", {"default": "Text of sample_audio"}), "text": ("STRING", {"multiline": True, "default": "สวัสดีครับ"}), "model_name": (["model_100000.pt", "model_130000.pt", "model_150000.pt", "model_200000.pt", "model_250000.pt", "model_350000.pt", "model_430000.pt", "model_475000.pt", "model_500000.pt"], {"default": "model_500000.pt"}), "seed": ("INT", {"default": -1, "min": -1})}}
+        model_choices = [
+            "model_100000.pt", "model_130000.pt", "model_150000.pt", "model_200000.pt",
+            "model_250000.pt", "model_350000.pt", "model_430000.pt", "model_475000.pt", "model_500000.pt"
+        ]
+        print(f"[DEBUG] INPUT_TYPES model choices: {model_choices}")
+        return {
+            "required": {
+                "sample_audio": ("AUDIO",),
+                "sample_text": ("STRING", {"default": "Text of sample_audio"}),
+                "text": ("STRING", {"multiline": True, "default": "สวัสดีครับ"}),
+                "model_name": (model_choices, {"default": "model_500000.pt"}),
+                "seed": ("INT", {"default": -1, "min": -1}),
+                "remove_silence": ("BOOL", {"default": True}),
+                "speed": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 5.0, "step": 0.1}),
+                "cross_fade_duration": ("FLOAT", {"default": 0.15, "min": 0.0, "max": 1.0, "step": 0.01}),
+                "nfe_step": ("INT", {"default": 32, "min": 1, "max": 128}),
+                "cfg_strength": ("FLOAT", {"default": 2.0, "min": 0.0, "max": 10.0, "step": 0.1}),
+                "sway_sampling_coef": ("FLOAT", {"default": -1.0, "min": -5.0, "max": 5.0, "step": 0.1}),
+                "fix_duration": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 30.0, "step": 0.1}),
+                "max_chars": ("INT", {"default": 250, "min": 1, "max": 1000}),
+            }
+        }
 
     RETURN_TYPES = ("AUDIO", "STRING")
     RETURN_NAMES = ("audio", "text")
