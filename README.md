@@ -49,31 +49,34 @@ cd ComfyUI-F5-TTS-TH
 git submodule update --init --recursive
 ```
 
-# 3. สร้าง virtual env 
+### 3. สร้าง virtual env 
 ```
 python -m venv venv
 source venv/bin/activate  # หรือ call venv/Scripts/activate บน Windows
 ```
-# 4. อัปเกรด pip
+
+### 4. อัปเกรด pip
 ```
 pip install --upgrade pip
 ```
-# 5. ติดตั้งทุก dependencies 
+
+### 5. ติดตั้ง dependencies 
 ```
 pip install -r requirements.txt
+```
 
-# Core PyTorch + Audio backend เลือก ให้ตรงกับ Pod ที่ตัวเองใช้ ตัวไดตัวหนึ่ง
+## Core PyTorch + Audio backend เลือก ให้ตรงกับ Pod ที่ตัวเองใช้ ตัวไดตัวหนึ่ง
 
-# 🔥 CUDA 12.6 (RTX 30/40 ซีรีส์ และ ComfyUI บน CUDA 12.6)
+### 🔥 CUDA 12.6 (RTX 30/40 ซีรีส์ และ ComfyUI บน CUDA 12.6)
 ```
 pip install \
   torch==2.1.2+cu126 \
   torchvision==0.15.2+cu126 \
   torchaudio==2.1.2+cu126 \
   --extra-index-url https://download.pytorch.org/whl/cu126
-
 ```
-🛠️ CUDA 11.8 (GPU รุ่นเก่า หรือถ้าคุณใช้ cu118)
+
+### 🛠️ CUDA 11.8 (GPU รุ่นเก่า หรือถ้าคุณใช้ cu118)
 ```
 pip install \
   torch==2.1.2+cu118 \
@@ -82,7 +85,7 @@ pip install \
   --extra-index-url https://download.pytorch.org/whl/cu118
 ```
 
-# 🖥️ CPU only (ไม่มี CUDA)
+### 🖥️ CPU only (ไม่มี CUDA)
 ```
 pip install \
   torch==2.1.2 \
@@ -90,28 +93,31 @@ pip install \
   torchaudio==2.1.2
 ```
 
-# 🍏 Mac (Apple Silicon)
+### 🍏 Mac (Apple Silicon)
 ```
 pip install \
   torch==2.1.2 \
   torchvision==0.15.2 \
   torchaudio==2.1.2
 ```
-# 🐉 ROCm (AMD GPUs, สมมติ ROCm 6.4)
+
+### 🐉 ROCm (AMD GPUs, สมมติ ROCm 6.4)
 ```
 pip install \
   torch==2.1.2+rocm6.4 \
   torchvision==0.15.2+rocm6.4 \
   torchaudio==2.1.2+rocm6.4 \
   --extra-index-url https://download.pytorch.org/whl/rocm6.4
-```  
----
 ```
-# 6. ติดตั้ง ffmpeg
+
+---
+
+### 6. ติดตั้ง ffmpeg
 ```
 apt update && apt install -y ffmpeg
 ```
-# 7. Custom Node ที่แนะนำให้ติดตั้งเพิ่มเติม
+
+### 7. Custom Node ที่แนะนำให้ติดตั้งเพิ่มเติม
 
 | ชื่อ Node | ใช้ทำอะไร | ลิงก์ |
 |-----------|------------|-------|
