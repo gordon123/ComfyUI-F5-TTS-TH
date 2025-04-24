@@ -41,8 +41,8 @@ class F5TTS_Advance:
         "speed": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 5.0, "step": 0.1}),
     }
 
-        @classmethod
-    def INPUT_TYPES(cls):
+    @classmethod
+    def INPUT_TYPES(cls):(cls):
         model_choices = [
             "model_100000.pt", "model_130000.pt", "model_150000.pt", "model_200000.pt",
             "model_250000.pt", "model_350000.pt", "model_430000.pt", "model_475000.pt", "model_500000.pt"
