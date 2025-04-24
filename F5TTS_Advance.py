@@ -59,11 +59,19 @@ class F5TTS_Advance:
     def synthesize(self, sample_audio, sample_text, text, model_name="model_500000.pt", seed=-1, speed=1.0):
         # Save reference audio to temporary WAV
         waveform = sample_audio["waveform"].float().contiguous()
+        # Ensure waveform is 2D (channels, samples)
+        if waveform.ndim == 3:
+            waveform = waveform.squeeze()
+        elif waveform.ndim == 1:
+            waveform = waveform.unsqueeze(0)
+        elif waveform.ndim > 2:
+            waveform = waveform.view(waveform.shape[0], -1)
         sr = sample_audio["sample_rate"]
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
             torchaudio.save(tmp.name, waveform, sr, format="wav", encoding="PCM_S", bits_per_sample=16)
             tmp_path = tmp.name
         ref_audio, ref_text = preprocess_ref_audio_text(tmp_path, sample_text)
+        os.unlink(tmp_path)
         os.unlink(tmp_path)
 
         # Clean input text: handle numbers and repeated Thai words
