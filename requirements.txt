@@ -1,8 +1,8 @@
 # Core PyTorch + Audio backend
 # ✅ PyTorch with CUDA 12.6 เหมาะกับ GPU ใหม่ๆ และ NVIDIA RTX 40 series และ 30 series และ comfyui
-torch==2.1.2+cu126
-torchaudio==2.1.2+cu126
---extra-index-url https://download.pytorch.org/whl/cu126
+#torch==2.1.2+cu126
+#torchaudio==2.1.2+cu126
+#--extra-index-url https://download.pytorch.org/whl/cu126
 # ✅ PyTorch with CUDA 11.8 for older GPUs, if needed
 # torch==2.1.2+cu118
 # torchaudio==2.1.2+cu118
