@@ -160,4 +160,4 @@ class F5TTS_Advance:
             print(f"[DEBUG] output tensor reshaped to 2D: {audio_tensor.shape}")
 
         print("[DEBUG] Synthesis pipeline complete")
-        return (audio_tensor, sample_rate), cleaned_text
+        return {"waveform": audio_tensor, "sample_rate": sample_rate}, cleaned_text
