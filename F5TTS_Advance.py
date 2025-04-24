@@ -76,6 +76,11 @@ class F5TTS_Advance:
     FUNCTION = "synthesize"
     CATEGORY = "🎤 Thai TTS"
 
+        RETURN_TYPES = ("AUDIO", "STRING")
+    RETURN_NAMES = ("audio", "text")
+    FUNCTION = "synthesize"
+    CATEGORY = "🎤 Thai TTS"
+
     def synthesize(
         self,
         sample_audio, sample_text, text,
