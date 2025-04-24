@@ -72,14 +72,23 @@ class F5TTS_Advance:
             waveform = waveform.unsqueeze(0)
         elif waveform.ndim > 2:
             waveform = waveform.view(waveform.shape[0], -1)
-
+        print(f"[DEBUG] waveform shape before save: {waveform.shape}, dtype: {waveform.dtype}")
         sr = sample_audio["sample_rate"]
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-            torchaudio.save(tmp.name, waveform, sr)
+            try:
+                import soundfile as sf
+                data = waveform.cpu().numpy().T  # (samples, channels)
+                sf.write(tmp.name, data, sr)
+                print(f"[DEBUG] Saved WAV via soundfile to: {tmp.name}")
+            except Exception as e:
+                print(f"[ERROR] soundfile write failed: {e}")
+                # Fallback to torchaudio.save
+                torchaudio.set_audio_backend("soundfile")
+                torchaudio.save(tmp.name, waveform, sr)
+                print(f"[DEBUG] Saved WAV via torchaudio.save to: {tmp.name}")
             tmp_path = tmp.name
 
-        # Preprocess reference
-        ref_audio, ref_text = preprocess_ref_audio_text(tmp_path, sample_text)
+        # Preprocess reference(tmp_path, sample_text)
         os.unlink(tmp_path)
 
         # Load model configuration
