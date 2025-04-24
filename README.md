@@ -64,19 +64,47 @@ pip install -r requirements.txt
 
 # Core PyTorch + Audio backend เลือก ให้ตรงกับ Pod ที่ตัวเองใช้ ตัวไดตัวหนึ่ง
 
-# ✅ PyTorch with CUDA 12.6 เหมาะกับ GPU ใหม่ๆ และ NVIDIA RTX 40 series และ 30 series และ comfyui
-pip install torch==2.1.2+cu126 torchaudio==2.1.2+cu126 --extra-index-url https://download.pytorch.org/whl/cu126
+# 🔥 CUDA 12.6 (RTX 30/40 ซีรีส์ และ ComfyUI บน CUDA 12.6)
+```
+pip install \
+  torch==2.1.2+cu126 \
+  torchvision==0.15.2+cu126 \
+  torchaudio==2.1.2+cu126 \
+  --extra-index-url https://download.pytorch.org/whl/cu126
 
-# ✅ PyTorch with CUDA 11.8 for older GPUs, if needed
-pip install torch==2.1.2+cu118 torchaudio==2.1.2+cu118 --extra-index-url https://download.pytorch.org/whl/cu118
+```
+🛠️ CUDA 11.8 (GPU รุ่นเก่า หรือถ้าคุณใช้ cu118)
+```
+pip install \
+  torch==2.1.2+cu118 \
+  torchvision==0.15.2+cu118 \
+  torchaudio==2.1.2+cu118 \
+  --extra-index-url https://download.pytorch.org/whl/cu118
+```
 
-# ✅ PyTorch with CPU only
-pip install torch==2.1.2 torchaudio==2.1.2
+# 🖥️ CPU only (ไม่มี CUDA)
+```
+pip install \
+  torch==2.1.2 \
+  torchvision==0.15.2 \
+  torchaudio==2.1.2
+```
 
-# ✅ PyTorch with MPS (Apple Silicon)
-pip install torch==2.1.2 torchaudio==2.1.2
-
-# ✅ PyTorch with ROCm (AMD GPUs)      
+# 🍏 Mac (Apple Silicon)
+```
+pip install \
+  torch==2.1.2 \
+  torchvision==0.15.2 \
+  torchaudio==2.1.2
+```
+# 🐉 ROCm (AMD GPUs, สมมติ ROCm 6.4)
+```
+pip install \
+  torch==2.1.2+rocm6.4 \
+  torchvision==0.15.2+rocm6.4 \
+  torchaudio==2.1.2+rocm6.4 \
+  --extra-index-url https://download.pytorch.org/whl/rocm6.4
+```  
 ---
 ```
 # 6. ติดตั้ง ffmpeg
