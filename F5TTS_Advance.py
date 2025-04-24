@@ -22,6 +22,9 @@ from f5_tts.infer.utils_infer import (
     preprocess_ref_audio_text,
     infer_process
 )
+# Import Thai text cleaning functions
+from f5_tts.cleantext.number_tha import replace_numbers_with_thai
+from f5_tts.cleantext.th_repeat import process_thai_repeat
 sys.path.pop(0)
 
 class F5TTS_Advance:
@@ -51,10 +54,10 @@ class F5TTS_Advance:
     RETURN_TYPES = ("AUDIO", "STRING")
     RETURN_NAMES = ("audio", "text")
     FUNCTION = "synthesize"
-    CATEGORY = "🇹🇭 Thai TTS"
+    CATEGORY = "🎤 Thai TTS"
 
     def synthesize(self, sample_audio, sample_text, text, model_name="model_500000.pt", seed=-1, speed=1.0):
-        # Save reference audio to tempoary wav
+        # Save reference audio to temporary WAV
         waveform = sample_audio["waveform"].float().contiguous()
         sr = sample_audio["sample_rate"]
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
@@ -63,7 +66,11 @@ class F5TTS_Advance:
         ref_audio, ref_text = preprocess_ref_audio_text(tmp_path, sample_text)
         os.unlink(tmp_path)
 
-        # Load model config
+        # Clean input text: handle numbers and repeated Thai words
+        cleaned_text = replace_numbers_with_thai(text)
+        cleaned_text = process_thai_repeat(cleaned_text)
+
+        # Load model configuration
         cfg_candidates = [
             "F5TTS_Base.yaml",
             "F5TTS_Base_train.yaml"
@@ -78,11 +85,11 @@ class F5TTS_Advance:
             raise FileNotFoundError("Config file not found in submodule configs")
         model_cfg = OmegaConf.load(cfg_path).model.arch
 
-        # Paths for model and vocab
+        # Paths for model and vocabulary
         model_path = os.path.join(Install.base_path, "model", model_name)
         vocab_path = os.path.join(Install.base_path, "vocab.txt")
 
-        # Download if missing
+        # Download model and vocab if missing
         if not os.path.exists(model_path):
             print(f"⬇️ Downloading model {model_name}...")
             urllib.request.urlretrieve(
@@ -98,20 +105,20 @@ class F5TTS_Advance:
             )
             print("✅ vocab.txt downloaded.")
 
-        # Load model and vocoder
+        # Load TTS model and vocoder
         model = load_model(DiT, model_cfg, model_path, vocab_file=vocab_path, mel_spec_type="vocos")
         vocoder = load_vocoder("vocos")
         device = comfy.model_management.get_torch_device()
         model = model.to(device)
         vocoder = vocoder.to(device)
 
-        # Set seed for reproducibility
+        # Set random seed if provided
         if seed >= 0:
             torch.manual_seed(seed)
 
-        # Run inference
+        # Run inference with cleaned text
         audio_np, sample_rate, _ = infer_process(
-            ref_audio, ref_text, text,
+            ref_audio, ref_text, cleaned_text,
             model, vocoder=vocoder, mel_spec_type="vocos",
             device=device,
             speed=speed
@@ -120,4 +127,4 @@ class F5TTS_Advance:
         if audio_tensor.ndim == 1:
             audio_tensor = audio_tensor.unsqueeze(0)
 
-        return (audio_tensor, sample_rate), text
+        return (audio_tensor, sample_rate), cleaned_text
