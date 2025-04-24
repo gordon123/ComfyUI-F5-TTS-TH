@@ -12,6 +12,9 @@ import urllib.request
 # Ensure the submodule is initialized
 Install.check_install()
 
+# Use sox_io backend to avoid FFmpeg channel layout issues
+torchaudio.set_audio_backend("sox_io")
+
 # Add submodule source to Python path for inference
 f5tts_src = os.path.join(Install.base_path, "src")
 sys.path.insert(0, f5tts_src)
@@ -30,7 +33,6 @@ sys.path.pop(0)
 class F5TTS_Advance:
     @classmethod
     def INPUT_TYPES(cls):
-        # Available Thai TTS models from submodule model/ directory
         model_choices = [
             "model_100000.pt",
             "model_130000.pt",
@@ -57,32 +59,31 @@ class F5TTS_Advance:
     CATEGORY = "🎤 Thai TTS"
 
     def synthesize(self, sample_audio, sample_text, text, model_name="model_500000.pt", seed=-1, speed=1.0):
-        # Save reference audio to temporary WAV
+        # Prepare and clean text
+        cleaned_text = replace_numbers_with_thai(text)
+        cleaned_text = process_thai_repeat(cleaned_text)
+
+        # Save reference audio as temporary WAV
         waveform = sample_audio["waveform"].float().contiguous()
-        # Ensure waveform is 2D (channels, samples)
+        # Ensure 2D tensor (channels, samples)
         if waveform.ndim == 3:
             waveform = waveform.squeeze()
         elif waveform.ndim == 1:
             waveform = waveform.unsqueeze(0)
         elif waveform.ndim > 2:
             waveform = waveform.view(waveform.shape[0], -1)
+
         sr = sample_audio["sample_rate"]
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-            torchaudio.save(tmp.name, waveform, sr, format="wav", encoding="PCM_S", bits_per_sample=16)
+            torchaudio.save(tmp.name, waveform, sr)
             tmp_path = tmp.name
+
+        # Preprocess reference
         ref_audio, ref_text = preprocess_ref_audio_text(tmp_path, sample_text)
         os.unlink(tmp_path)
-        os.unlink(tmp_path)
-
-        # Clean input text: handle numbers and repeated Thai words
-        cleaned_text = replace_numbers_with_thai(text)
-        cleaned_text = process_thai_repeat(cleaned_text)
 
         # Load model configuration
-        cfg_candidates = [
-            "F5TTS_Base.yaml",
-            "F5TTS_Base_train.yaml"
-        ]
+        cfg_candidates = ["F5TTS_Base.yaml", "F5TTS_Base_train.yaml"]
         cfg_path = None
         for cfg in cfg_candidates:
             candidate = os.path.join(Install.base_path, "src", "f5_tts", "configs", cfg)
@@ -93,11 +94,11 @@ class F5TTS_Advance:
             raise FileNotFoundError("Config file not found in submodule configs")
         model_cfg = OmegaConf.load(cfg_path).model.arch
 
-        # Paths for model and vocabulary
+        # Paths for model and vocab
         model_path = os.path.join(Install.base_path, "model", model_name)
         vocab_path = os.path.join(Install.base_path, "vocab.txt")
 
-        # Download model and vocab if missing
+        # Download model/vocab if missing
         if not os.path.exists(model_path):
             print(f"⬇️ Downloading model {model_name}...")
             urllib.request.urlretrieve(
@@ -113,18 +114,18 @@ class F5TTS_Advance:
             )
             print("✅ vocab.txt downloaded.")
 
-        # Load TTS model and vocoder
+        # Load model and vocoder
         model = load_model(DiT, model_cfg, model_path, vocab_file=vocab_path, mel_spec_type="vocos")
         vocoder = load_vocoder("vocos")
         device = comfy.model_management.get_torch_device()
         model = model.to(device)
         vocoder = vocoder.to(device)
 
-        # Set random seed if provided
+        # Seed for reproducibility
         if seed >= 0:
             torch.manual_seed(seed)
 
-        # Run inference with cleaned text
+        # Generate speech
         audio_np, sample_rate, _ = infer_process(
             ref_audio, ref_text, cleaned_text,
             model, vocoder=vocoder, mel_spec_type="vocos",
