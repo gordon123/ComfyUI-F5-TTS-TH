@@ -29,31 +29,21 @@ from f5_tts.cleantext.th_repeat import process_thai_repeat
 sys.path.pop(0)
 
 class F5TTS_Advance:
-    # Widget properties: show as controls on the node
+    # Widget properties: expose parameters on the node
     PROPERTIES = {
         "remove_silence": ("BOOL", {"default": True}),
         "cross_fade_duration": ("FLOAT", {"default": 0.15, "min": 0.0, "max": 1.0, "step": 0.01}),
         "nfe_step": ("INT", {"default": 32, "min": 1, "max": 128}),
-        "cfg_strength": ("INT", {"default": 2, "min": 0, "max": 10}),
+        "cfg_strength": ("FLOAT", {"default": 2.0, "min": 0.0, "max": 10.0, "step": 0.1}),
+        "sway_sampling_coef": ("FLOAT", {"default": -1.0, "min": -5.0, "max": 5.0, "step": 0.1}),
+        "fix_duration": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 30.0, "step": 0.1}),
         "max_chars": ("INT", {"default": 250, "min": 1, "max": 1000}),
+        "speed": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 5.0, "step": 0.1}),
     }
 
     @classmethod
     def INPUT_TYPES(cls):
-        model_choices = [
-            "model_100000.pt", "model_130000.pt", "model_150000.pt", "model_200000.pt",
-            "model_250000.pt", "model_350000.pt", "model_430000.pt", "model_475000.pt", "model_500000.pt"
-        ]
-        return {
-            "required": {
-                "sample_audio": ("AUDIO",),
-                "sample_text": ("STRING", {"default": "Text of sample_audio"}),
-                "text": ("STRING", {"multiline": True, "default": "สวัสดีครับ"}),
-                "model_name": (model_choices, {"default": "model_500000.pt"}),
-                "seed": ("INT", {"default": -1, "min": -1}),
-                "speed": ("FLOAT", {"default": 1.0, "min": 0.5, "max": 2.0, "step": 0.1}),
-            }
-        }
+        return {"required": {"sample_audio": ("AUDIO",), "sample_text": ("STRING", {"default": "Text of sample_audio"}), "text": ("STRING", {"multiline": True, "default": "สวัสดีครับ"}), "model_name": (["model_100000.pt", "model_130000.pt", "model_150000.pt", "model_200000.pt", "model_250000.pt", "model_350000.pt", "model_430000.pt", "model_475000.pt", "model_500000.pt"], {"default": "model_500000.pt"}), "seed": ("INT", {"default": -1, "min": -1})}}
 
     RETURN_TYPES = ("AUDIO", "STRING")
     RETURN_NAMES = ("audio", "text")
@@ -67,14 +57,16 @@ class F5TTS_Advance:
         text,
         model_name="model_500000.pt",
         seed=-1,
-        speed=1.0,
         remove_silence=True,
         cross_fade_duration=0.15,
         nfe_step=32,
-        cfg_strength=2,
-        max_chars=250
+        cfg_strength=2.0,
+        sway_sampling_coef=-1.0,
+        fix_duration=0.0,
+        max_chars=250,
+        speed=1.0,
     ):
-        # Clean text
+        # Clean input text
         cleaned_text = process_thai_repeat(replace_numbers_with_thai(text))
 
         # Prepare reference audio
@@ -90,35 +82,25 @@ class F5TTS_Advance:
         ref_audio, ref_text = preprocess_ref_audio_text(ref_path, sample_text)
         os.unlink(ref_path)
 
-        # Load model config
+        # Load config
         cfg_folder = os.path.join(Install.base_path, "src", "f5_tts", "configs")
         cfg_candidates = ["F5TTS_Base.yaml", "F5TTS_Base_train.yaml"]
-        cfg_path = next(
-            (os.path.join(cfg_folder, c) for c in cfg_candidates if os.path.exists(os.path.join(cfg_folder, c))),
-            None
-        )
+        cfg_path = next((os.path.join(cfg_folder, c) for c in cfg_candidates if os.path.exists(os.path.join(cfg_folder, c))), None)
         if not cfg_path:
             raise FileNotFoundError("Config file not found in configs")
         model_cfg = OmegaConf.load(cfg_path).model.arch
 
-        # Prepare model & vocab directories
+        # Prepare model & vocab
         model_dir = os.path.join(Install.base_path, "model")
         os.makedirs(model_dir, exist_ok=True)
         model_path = os.path.join(model_dir, model_name)
         vocab_dir = os.path.join(Install.base_path, "vocab")
         os.makedirs(vocab_dir, exist_ok=True)
         vocab_path = os.path.join(vocab_dir, "vocab.txt")
-        # Download if missing
         if not os.path.exists(model_path):
-            urllib.request.urlretrieve(
-                f"https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/model/{model_name}",
-                model_path
-            )
+            urllib.request.urlretrieve(f"https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/model/{model_name}", model_path)
         if not os.path.exists(vocab_path):
-            urllib.request.urlretrieve(
-                "https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/vocab.txt",
-                vocab_path
-            )
+            urllib.request.urlretrieve("https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/vocab.txt", vocab_path)
 
         # Load model and vocoder
         model = load_model(DiT, model_cfg, model_path, vocab_file=vocab_path, mel_spec_type="vocos")
@@ -127,7 +109,7 @@ class F5TTS_Advance:
         model.to(device)
         vocoder.to(device)
 
-        # Seed for reproducibility
+        # Seed
         if seed >= 0:
             torch.manual_seed(seed)
 
@@ -142,6 +124,8 @@ class F5TTS_Advance:
             cross_fade_duration=cross_fade_duration,
             nfe_step=nfe_step,
             cfg_strength=cfg_strength,
+            sway_sampling_coef=sway_sampling_coef,
+            fix_duration=fix_duration,
             set_max_chars=max_chars,
             mel_spec_type="vocos",
             device=device
@@ -150,7 +134,7 @@ class F5TTS_Advance:
         if audio_tensor.ndim == 1:
             audio_tensor = audio_tensor.unsqueeze(0)
 
-        # Silence removal if requested
+        # Remove silence if requested
         if remove_silence:
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as outf:
                 sf.write(outf.name, audio_tensor.cpu().numpy().T, sr_out)
