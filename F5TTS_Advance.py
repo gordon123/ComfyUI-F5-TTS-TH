@@ -89,7 +89,7 @@ class F5TTS_Advance:
         # Preprocess reference
         try:
             ref_audio, ref_text = preprocess_ref_audio_text(tmp_path, sample_text)
-            print(f"[DEBUG] Preprocessed ref_audio shape: {ref_audio.shape}, ref_text: {ref_text}")
+            print(f"[DEBUG] Preprocessed ref_audio path: {ref_audio}, ref_text: {ref_text}")
         finally:
             os.unlink(tmp_path)
 
