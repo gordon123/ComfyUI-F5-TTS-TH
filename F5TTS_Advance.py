@@ -3,6 +3,7 @@ import sys
 import tempfile
 import torch
 import torchaudio
+import soundfile as sf
 from omegaconf import OmegaConf
 import comfy
 from comfy.utils import ProgressBar
@@ -11,9 +12,6 @@ import urllib.request
 
 # Ensure the submodule is initialized
 Install.check_install()
-
-# Use sox_io backend to avoid FFmpeg channel layout issues
-torchaudio.set_audio_backend("sox_io")
 
 # Add submodule source to Python path for inference
 f5tts_src = os.path.join(Install.base_path, "src")
@@ -44,6 +42,7 @@ class F5TTS_Advance:
             "model_475000.pt",
             "model_500000.pt",
         ]
+        print(f"[DEBUG] INPUT_TYPES model choices: {model_choices}")
         return {"required": {
             "sample_audio": ("AUDIO",),
             "sample_text": ("STRING", {"default": "Text of sample_audio"}),
@@ -59,39 +58,42 @@ class F5TTS_Advance:
     CATEGORY = "🎤 Thai TTS"
 
     def synthesize(self, sample_audio, sample_text, text, model_name="model_500000.pt", seed=-1, speed=1.0):
-        # Prepare and clean text
+        print("[DEBUG] Starting synthesis pipeline")
+        # Clean input text
+        print(f"[DEBUG] Original text: {text}")
         cleaned_text = replace_numbers_with_thai(text)
+        print(f"[DEBUG] After number conversion: {cleaned_text}")
         cleaned_text = process_thai_repeat(cleaned_text)
+        print(f"[DEBUG] After repeat cleaning: {cleaned_text}")
 
-        # Save reference audio as temporary WAV
+        # Prepare reference audio
         waveform = sample_audio["waveform"].float().contiguous()
-        # Ensure 2D tensor (channels, samples)
+        print(f"[DEBUG] Raw waveform shape: {waveform.shape}")
         if waveform.ndim == 3:
             waveform = waveform.squeeze()
+            print(f"[DEBUG] Squeezed to: {waveform.shape}")
         elif waveform.ndim == 1:
             waveform = waveform.unsqueeze(0)
+            print(f"[DEBUG] Unsqueezed to: {waveform.shape}")
         elif waveform.ndim > 2:
             waveform = waveform.view(waveform.shape[0], -1)
-        print(f"[DEBUG] waveform shape before save: {waveform.shape}, dtype: {waveform.dtype}")
+            print(f"[DEBUG] Reshaped to 2D: {waveform.shape}")
         sr = sample_audio["sample_rate"]
+        print(f"[DEBUG] Sample rate: {sr}")
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-            try:
-                import soundfile as sf
-                data = waveform.cpu().numpy().T  # (samples, channels)
-                sf.write(tmp.name, data, sr)
-                print(f"[DEBUG] Saved WAV via soundfile to: {tmp.name}")
-            except Exception as e:
-                print(f"[ERROR] soundfile write failed: {e}")
-                # Fallback to torchaudio.save
-                torchaudio.set_audio_backend("soundfile")
-                torchaudio.save(tmp.name, waveform, sr)
-                print(f"[DEBUG] Saved WAV via torchaudio.save to: {tmp.name}")
+            data = waveform.cpu().numpy().T  # shape (samples, channels)
+            sf.write(tmp.name, data, sr)
+            print(f"[DEBUG] Reference WAV saved to: {tmp.name} via soundfile")
             tmp_path = tmp.name
 
-        # Preprocess reference(tmp_path, sample_text)
-        os.unlink(tmp_path)
+        # Preprocess reference
+        try:
+            ref_audio, ref_text = preprocess_ref_audio_text(tmp_path, sample_text)
+            print(f"[DEBUG] Preprocessed ref_audio shape: {ref_audio.shape}, ref_text: {ref_text}")
+        finally:
+            os.unlink(tmp_path)
 
-        # Load model configuration
+        # Load model config
         cfg_candidates = ["F5TTS_Base.yaml", "F5TTS_Base_train.yaml"]
         cfg_path = None
         for cfg in cfg_candidates:
@@ -99,50 +101,58 @@ class F5TTS_Advance:
             if os.path.exists(candidate):
                 cfg_path = candidate
                 break
+        print(f"[DEBUG] Using config path: {cfg_path}")
         if cfg_path is None:
             raise FileNotFoundError("Config file not found in submodule configs")
         model_cfg = OmegaConf.load(cfg_path).model.arch
 
-        # Paths for model and vocab
+        # Prepare model and vocab paths
         model_path = os.path.join(Install.base_path, "model", model_name)
         vocab_path = os.path.join(Install.base_path, "vocab.txt")
+        print(f"[DEBUG] model_path: {model_path}, vocab_path: {vocab_path}")
 
-        # Download model/vocab if missing
+        # Download if missing
         if not os.path.exists(model_path):
-            print(f"⬇️ Downloading model {model_name}...")
+            print(f"[DEBUG] Downloading model {model_name}")
             urllib.request.urlretrieve(
                 f"https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/model/{model_name}",
                 model_path
             )
-            print(f"✅ Model downloaded: {model_name}")
         if not os.path.exists(vocab_path):
-            print("⬇️ Downloading vocab.txt...")
+            print(f"[DEBUG] Downloading vocab.txt")
             urllib.request.urlretrieve(
                 "https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/vocab.txt",
                 vocab_path
             )
-            print("✅ vocab.txt downloaded.")
 
         # Load model and vocoder
+        print("[DEBUG] Loading model and vocoder")
         model = load_model(DiT, model_cfg, model_path, vocab_file=vocab_path, mel_spec_type="vocos")
         vocoder = load_vocoder("vocos")
         device = comfy.model_management.get_torch_device()
         model = model.to(device)
         vocoder = vocoder.to(device)
+        print(f"[DEBUG] Model and vocoder moved to device: {device}")
 
-        # Seed for reproducibility
+        # Seed
         if seed >= 0:
             torch.manual_seed(seed)
+            print(f"[DEBUG] Seed set to: {seed}")
 
-        # Generate speech
+        # Inference
+        print(f"[DEBUG] Calling infer_process with speed: {speed}")
         audio_np, sample_rate, _ = infer_process(
             ref_audio, ref_text, cleaned_text,
             model, vocoder=vocoder, mel_spec_type="vocos",
             device=device,
             speed=speed
         )
+        print(f"[DEBUG] infer_process returned audio_np shape: {audio_np.shape}, sample_rate: {sample_rate}")
+
         audio_tensor = torch.from_numpy(audio_np)
         if audio_tensor.ndim == 1:
             audio_tensor = audio_tensor.unsqueeze(0)
+            print(f"[DEBUG] output tensor reshaped to 2D: {audio_tensor.shape}")
 
+        print("[DEBUG] Synthesis pipeline complete")
         return (audio_tensor, sample_rate), cleaned_text
