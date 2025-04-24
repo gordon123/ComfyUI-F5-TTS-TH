@@ -1,0 +1,294 @@
+{
+  "id": "efed5d03-d65f-4ba8-9782-a1076201baea",
+  "revision": 0,
+  "last_node_id": 13,
+  "last_link_id": 13,
+  "nodes": [
+    {
+      "id": 8,
+      "type": "Display Any (rgthree)",
+      "pos": [
+        822.5044555664062,
+        21.30615234375
+      ],
+      "size": [
+        479.3131103515625,
+        88
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "source",
+          "type": "*",
+          "link": 5
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "rgthree-comfy",
+        "ver": "1.0.0",
+        "Node name for S&R": "Display Any (rgthree)"
+      },
+      "widgets_values": [
+        ""
+      ]
+    },
+    {
+      "id": 12,
+      "type": "F5TTSAudioInputs",
+      "pos": [
+        820.21240234375,
+        147.62200927734375
+      ],
+      "size": [
+        491.4000244140625,
+        228
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "sample_audio",
+          "type": "AUDIO",
+          "link": 12
+        },
+        {
+          "name": "sample_text",
+          "type": "STRING",
+          "widget": {
+            "name": "sample_text"
+          },
+          "link": 11
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            13
+          ]
+        },
+        {
+          "name": "text",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "gordon123/ComfyUI-F5-TTS-TH",
+        "ver": "5f65f11b67f351f0b23bd4781e5a13cdcd809c36",
+        "Node name for S&R": "F5TTSAudioInputs"
+      },
+      "widgets_values": [
+        "Text of sample_audio",
+        "อย่างไรก็ตามเมื่อพิจารณาถึงที่มาของส่วนประกอบต่าง ๆ ของส้มตำ",
+        "model_500000.pt",
+        1611,
+        "randomize",
+        0.9000000000000001
+      ]
+    },
+    {
+      "id": 3,
+      "type": "Apply Whisper",
+      "pos": [
+        467.84918212890625,
+        143.9602508544922
+      ],
+      "size": [
+        315,
+        98
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "links": [
+            5,
+            11
+          ]
+        },
+        {
+          "name": "segments_alignment",
+          "type": "whisper_alignment",
+          "links": null
+        },
+        {
+          "name": "words_alignment",
+          "type": "whisper_alignment",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-Whisper",
+        "ver": "edd1a485acf5e1e14835fdf8c4af982c0eaf115f",
+        "Node name for S&R": "Apply Whisper"
+      },
+      "widgets_values": [
+        "base"
+      ]
+    },
+    {
+      "id": 2,
+      "type": "LoadAudio",
+      "pos": [
+        128.0623321533203,
+        138.1387939453125
+      ],
+      "size": [
+        315,
+        136
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "AUDIO",
+          "type": "AUDIO",
+          "links": [
+            2,
+            12
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.29",
+        "Node name for S&R": "LoadAudio"
+      },
+      "widgets_values": [
+        "mono_24000.wav",
+        null,
+        ""
+      ]
+    },
+    {
+      "id": 7,
+      "type": "VrchAudioSaverNode",
+      "pos": [
+        1335.0006103515625,
+        139.31689453125
+      ],
+      "size": [
+        315,
+        184
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 13
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfyui-web-viewer",
+        "ver": "1.0.30",
+        "Node name for S&R": "VrchAudioSaverNode"
+      },
+      "widgets_values": [
+        "F5TTSth",
+        "web_viewer",
+        "mp3",
+        true
+      ]
+    },
+    {
+      "id": 13,
+      "type": "Note",
+      "pos": [
+        176.7242431640625,
+        338.66131591796875
+      ],
+      "size": [
+        287.1355895996094,
+        145.4708251953125
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "1. อัพโหลดเสียง\n2. กด Gen!\n\n"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    }
+  ],
+  "links": [
+    [
+      2,
+      2,
+      0,
+      3,
+      0,
+      "AUDIO"
+    ],
+    [
+      5,
+      3,
+      0,
+      8,
+      0,
+      "*"
+    ],
+    [
+      11,
+      3,
+      0,
+      12,
+      1,
+      "STRING"
+    ],
+    [
+      12,
+      2,
+      0,
+      12,
+      0,
+      "AUDIO"
+    ],
+    [
+      13,
+      12,
+      0,
+      7,
+      0,
+      "AUDIO"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.6830134553650705,
+      "offset": [
+        46.81377746316404,
+        214.14907663679702
+      ]
+    },
+    "frontendVersion": "1.16.9"
+  },
+  "version": 0.4
+}
