@@ -1,44 +1,123 @@
 import os
-from pydub import AudioSegment
-from TTS.api import TTS  # สมมุติว่าคุณใช้ Coqui TTS
+import sys
+import tempfile
+import torch
+import torchaudio
+from omegaconf import OmegaConf
+import comfy
+from comfy.utils import ProgressBar
+from .Install import Install
+import urllib.request
+
+# Ensure the submodule is initialized
+Install.check_install()
+
+# Add submodule source to Python path for inference
+f5tts_src = os.path.join(Install.base_path, "src")
+sys.path.insert(0, f5tts_src)
+from f5_tts.model import DiT
+from f5_tts.infer.utils_infer import (
+    load_model,
+    load_vocoder,
+    preprocess_ref_audio_text,
+    infer_process
+)
+sys.path.pop(0)
 
 class F5TTS_Advance:
     @classmethod
     def INPUT_TYPES(cls):
-        return {
-            "required": {
-                "text": ("STRING", {"multiline": True, "default": "สวัสดีครับ"}),
-                "speaker_id": ("INT", {"default": 0, "min": 0, "max": 100}),
-                "speed": ("FLOAT", {"default": 1.0, "min": 0.5, "max": 2.0, "step": 0.1}),
-                "pitch": ("FLOAT", {"default": 1.0, "min": 0.5, "max": 2.0, "step": 0.1}),
-                "use_flow_matching": (["true", "false"],),
-                "use_vocos": (["true", "false"],),
-            }
-        }
+        # Available Thai TTS models from submodule model/ directory
+        model_choices = [
+            "model_100000.pt",
+            "model_130000.pt",
+            "model_150000.pt",
+            "model_200000.pt",
+            "model_250000.pt",
+            "model_350000.pt",
+            "model_430000.pt",
+            "model_475000.pt",
+            "model_500000.pt",
+        ]
+        return {"required": {
+            "sample_audio": ("AUDIO",),
+            "sample_text": ("STRING", {"default": "Text of sample_audio"}),
+            "text": ("STRING", {"multiline": True, "default": "สวัสดีครับ"}),
+            "model_name": (model_choices, {"default": "model_500000.pt"}),
+            "seed": ("INT", {"default": -1, "min": -1, "tooltip": "Seed. -1 = random"}),
+            "speed": ("FLOAT", {"default": 1.0, "min": 0.5, "max": 2.0, "step": 0.1, "tooltip": "Speed. >1.0 slower, <1.0 faster"}),
+        }}
 
-    RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("audio_path",)
+    RETURN_TYPES = ("AUDIO", "STRING")
+    RETURN_NAMES = ("audio", "text")
     FUNCTION = "synthesize"
-    CATEGORY = "🎤 Thai TTS"
+    CATEGORY = "🇹🇭 Thai TTS"
 
-    def synthesize(self, text, speaker_id, speed, pitch, use_flow_matching, use_vocos):
-        # ตั้งค่าพื้นฐาน
-        output_path = os.path.join(os.path.dirname(__file__), "assets", "tts_output.wav")
+    def synthesize(self, sample_audio, sample_text, text, model_name="model_500000.pt", seed=-1, speed=1.0):
+        # Save reference audio to tempoary wav
+        waveform = sample_audio["waveform"].float().contiguous()
+        sr = sample_audio["sample_rate"]
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+            torchaudio.save(tmp.name, waveform, sr, format="wav", encoding="PCM_S", bits_per_sample=16)
+            tmp_path = tmp.name
+        ref_audio, ref_text = preprocess_ref_audio_text(tmp_path, sample_text)
+        os.unlink(tmp_path)
 
-        # จำลองเรียก TTS API
-        tts = TTS(model_name="tts_models/multilingual/multi-dataset/your_model")
+        # Load model config
+        cfg_candidates = [
+            "F5TTS_Base.yaml",
+            "F5TTS_Base_train.yaml"
+        ]
+        cfg_path = None
+        for cfg in cfg_candidates:
+            candidate = os.path.join(Install.base_path, "src", "f5_tts", "configs", cfg)
+            if os.path.exists(candidate):
+                cfg_path = candidate
+                break
+        if cfg_path is None:
+            raise FileNotFoundError("Config file not found in submodule configs")
+        model_cfg = OmegaConf.load(cfg_path).model.arch
 
-        # synthesize
-        wav = tts.tts(
-            text,
-            speaker=speaker_id,
-            speed=speed,
-            pitch=pitch,
-            use_flow_matching=(use_flow_matching == "true"),
-            use_vocos=(use_vocos == "true"),
-            language="th"
+        # Paths for model and vocab
+        model_path = os.path.join(Install.base_path, "model", model_name)
+        vocab_path = os.path.join(Install.base_path, "vocab.txt")
+
+        # Download if missing
+        if not os.path.exists(model_path):
+            print(f"⬇️ Downloading model {model_name}...")
+            urllib.request.urlretrieve(
+                f"https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/model/{model_name}",
+                model_path
+            )
+            print(f"✅ Model downloaded: {model_name}")
+        if not os.path.exists(vocab_path):
+            print("⬇️ Downloading vocab.txt...")
+            urllib.request.urlretrieve(
+                "https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/vocab.txt",
+                vocab_path
+            )
+            print("✅ vocab.txt downloaded.")
+
+        # Load model and vocoder
+        model = load_model(DiT, model_cfg, model_path, vocab_file=vocab_path, mel_spec_type="vocos")
+        vocoder = load_vocoder("vocos")
+        device = comfy.model_management.get_torch_device()
+        model = model.to(device)
+        vocoder = vocoder.to(device)
+
+        # Set seed for reproducibility
+        if seed >= 0:
+            torch.manual_seed(seed)
+
+        # Run inference
+        audio_np, sample_rate, _ = infer_process(
+            ref_audio, ref_text, text,
+            model, vocoder=vocoder, mel_spec_type="vocos",
+            device=device,
+            speed=speed
         )
+        audio_tensor = torch.from_numpy(audio_np)
+        if audio_tensor.ndim == 1:
+            audio_tensor = audio_tensor.unsqueeze(0)
 
-        # บันทึกไฟล์เสียง
-        tts.save_wav(wav, output_path)
-        return (output_path,)
+        return (audio_tensor, sample_rate), text
