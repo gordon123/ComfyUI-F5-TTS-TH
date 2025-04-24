@@ -21,7 +21,8 @@ from f5_tts.infer.utils_infer import (
     load_model,
     load_vocoder,
     preprocess_ref_audio_text,
-    infer_process
+    infer_process,
+    remove_silence_for_generated_wav
 )
 # Import Thai text cleaning functions
 from f5_tts.cleantext.number_tha import replace_numbers_with_thai
@@ -32,24 +33,21 @@ class F5TTS_Advance:
     @classmethod
     def INPUT_TYPES(cls):
         model_choices = [
-            "model_100000.pt",
-            "model_130000.pt",
-            "model_150000.pt",
-            "model_200000.pt",
-            "model_250000.pt",
-            "model_350000.pt",
-            "model_430000.pt",
-            "model_475000.pt",
-            "model_500000.pt",
+            "model_100000.pt", "model_130000.pt", "model_150000.pt", "model_200000.pt",
+            "model_250000.pt", "model_350000.pt", "model_430000.pt", "model_475000.pt", "model_500000.pt",
         ]
-        print(f"[DEBUG] INPUT_TYPES model choices: {model_choices}")
         return {"required": {
             "sample_audio": ("AUDIO",),
             "sample_text": ("STRING", {"default": "Text of sample_audio"}),
             "text": ("STRING", {"multiline": True, "default": "สวัสดีครับ"}),
             "model_name": (model_choices, {"default": "model_500000.pt"}),
-            "seed": ("INT", {"default": -1, "min": -1, "tooltip": "Seed. -1 = random"}),
-            "speed": ("FLOAT", {"default": 1.0, "min": 0.5, "max": 2.0, "step": 0.1, "tooltip": "Speed. >1.0 slower, <1.0 faster"}),
+            "seed": ("INT", {"default": -1, "min": -1}),
+            "speed": ("FLOAT", {"default": 1.0, "min": 0.5, "max": 2.0, "step": 0.1}),
+            "remove_silence": ("BOOL", {"default": True}),
+            "cross_fade_duration": ("FLOAT", {"default": 0.15, "min": 0.0, "max": 1.0, "step": 0.01}),
+            "nfe_step": ("INT", {"default": 32, "min": 1, "max": 128}),
+            "cfg_strength": ("INT", {"default": 2, "min": 0, "max": 10}),
+            "max_chars": ("INT", {"default": 250, "min": 1, "max": 1000}),
         }}
 
     RETURN_TYPES = ("AUDIO", "STRING")
@@ -57,107 +55,89 @@ class F5TTS_Advance:
     FUNCTION = "synthesize"
     CATEGORY = "🎤 Thai TTS"
 
-    def synthesize(self, sample_audio, sample_text, text, model_name="model_500000.pt", seed=-1, speed=1.0):
-        print("[DEBUG] Starting synthesis pipeline")
+    def synthesize(
+        self,
+        sample_audio, sample_text, text,
+        model_name="model_500000.pt",
+        seed=-1,
+        speed=1.0,
+        remove_silence=True,
+        cross_fade_duration=0.15,
+        nfe_step=32,
+        cfg_strength=2,
+        max_chars=250
+    ):
         # Clean input text
-        print(f"[DEBUG] Original text: {text}")
-        cleaned_text = replace_numbers_with_thai(text)
-        print(f"[DEBUG] After number conversion: {cleaned_text}")
-        cleaned_text = process_thai_repeat(cleaned_text)
-        print(f"[DEBUG] After repeat cleaning: {cleaned_text}")
+        cleaned_text = process_thai_repeat(replace_numbers_with_thai(text))
 
-        # Prepare reference audio
+        # Prepare reference audio and save temp WAV
         waveform = sample_audio["waveform"].float().contiguous()
-        print(f"[DEBUG] Raw waveform shape: {waveform.shape}")
         if waveform.ndim == 3:
             waveform = waveform.squeeze()
-            print(f"[DEBUG] Squeezed to: {waveform.shape}")
         elif waveform.ndim == 1:
             waveform = waveform.unsqueeze(0)
-            print(f"[DEBUG] Unsqueezed to: {waveform.shape}")
-        elif waveform.ndim > 2:
-            waveform = waveform.view(waveform.shape[0], -1)
-            print(f"[DEBUG] Reshaped to 2D: {waveform.shape}")
         sr = sample_audio["sample_rate"]
-        print(f"[DEBUG] Sample rate: {sr}")
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-            data = waveform.cpu().numpy().T  # shape (samples, channels)
-            sf.write(tmp.name, data, sr)
-            print(f"[DEBUG] Reference WAV saved to: {tmp.name} via soundfile")
-            tmp_path = tmp.name
+            sf.write(tmp.name, waveform.cpu().numpy().T, sr)
+            ref_path = tmp.name
+        ref_audio, ref_text = preprocess_ref_audio_text(ref_path, sample_text)
+        os.unlink(ref_path)
 
-        # Preprocess reference
-        try:
-            ref_audio, ref_text = preprocess_ref_audio_text(tmp_path, sample_text)
-            print(f"[DEBUG] Preprocessed ref_audio path: {ref_audio}, ref_text: {ref_text}")
-        finally:
-            os.unlink(tmp_path)
-
-        # Load model config
+        # Load config
+        cfg_folder = os.path.join(Install.base_path, "src", "f5_tts", "configs")
         cfg_candidates = ["F5TTS_Base.yaml", "F5TTS_Base_train.yaml"]
-        cfg_path = None
-        for cfg in cfg_candidates:
-            candidate = os.path.join(Install.base_path, "src", "f5_tts", "configs", cfg)
-            if os.path.exists(candidate):
-                cfg_path = candidate
-                break
-        print(f"[DEBUG] Using config path: {cfg_path}")
-        if cfg_path is None:
-            raise FileNotFoundError("Config file not found in submodule configs")
+        cfg_path = next((os.path.join(cfg_folder, c) for c in cfg_candidates if os.path.exists(os.path.join(cfg_folder, c))), None)
+        if not cfg_path:
+            raise FileNotFoundError("Config not found")
         model_cfg = OmegaConf.load(cfg_path).model.arch
 
-        # Prepare model and vocab paths using 'model/' and 'vocab/' directories
-        model_dir = os.path.join(Install.base_path, "model")
-        os.makedirs(model_dir, exist_ok=True)
-        model_path = os.path.join(model_dir, model_name)
-        vocab_dir = os.path.join(Install.base_path, "vocab")
-        os.makedirs(vocab_dir, exist_ok=True)
-        vocab_path = os.path.join(vocab_dir, "vocab.txt")
-        print(f"[DEBUG] model_dir: {model_dir}, model_path: {model_path}, vocab_dir: {vocab_dir}, vocab_path: {vocab_path}")
-
-
-        # Download if missing
-        if not os.path.exists(model_path):
-            print(f"[DEBUG] Downloading model {model_name}")
+        # Prepare model & vocab
+        mdl_dir = os.path.join(Install.base_path, "model")
+        os.makedirs(mdl_dir, exist_ok=True)
+        mdl_path = os.path.join(mdl_dir, model_name)
+        vcb_dir = os.path.join(Install.base_path, "vocab")
+        os.makedirs(vcb_dir, exist_ok=True)
+        vcb_path = os.path.join(vcb_dir, "vocab.txt")
+        if not os.path.exists(mdl_path):
             urllib.request.urlretrieve(
-                f"https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/model/{model_name}",
-                model_path
-            )
-        if not os.path.exists(vocab_path):
-            print(f"[DEBUG] Downloading vocab.txt")
+                f"https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/model/{model_name}", mdl_path)
+        if not os.path.exists(vcb_path):
             urllib.request.urlretrieve(
-                "https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/vocab.txt",
-                vocab_path
-            )
+                "https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/vocab.txt", vcb_path)
 
-        # Load model and vocoder
-        print("[DEBUG] Loading model and vocoder")
-        model = load_model(DiT, model_cfg, model_path, vocab_file=vocab_path, mel_spec_type="vocos")
+        # Load model
+        model = load_model(DiT, model_cfg, mdl_path, vocab_file=vcb_path, mel_spec_type="vocos")
         vocoder = load_vocoder("vocos")
         device = comfy.model_management.get_torch_device()
-        model = model.to(device)
-        vocoder = vocoder.to(device)
-        print(f"[DEBUG] Model and vocoder moved to device: {device}")
+        model.to(device); vocoder.to(device)
 
         # Seed
         if seed >= 0:
             torch.manual_seed(seed)
-            print(f"[DEBUG] Seed set to: {seed}")
 
         # Inference
-        print(f"[DEBUG] Calling infer_process with speed: {speed}")
-        audio_np, sample_rate, _ = infer_process(
+        audio_np, sr_out, _ = infer_process(
             ref_audio, ref_text, cleaned_text,
-            model, vocoder=vocoder, mel_spec_type="vocos",
-            device=device,
-            speed=speed
+            model, vocoder=vocoder,
+            speed=speed,
+            cross_fade_duration=cross_fade_duration,
+            nfe_step=nfe_step,
+            cfg_strength=cfg_strength,
+            set_max_chars=max_chars,
+            progress=ProgressBar(),
+            mel_spec_type="vocos",
+            device=device
         )
-        print(f"[DEBUG] infer_process returned audio_np shape: {audio_np.shape}, sample_rate: {sample_rate}")
-
         audio_tensor = torch.from_numpy(audio_np)
         if audio_tensor.ndim == 1:
             audio_tensor = audio_tensor.unsqueeze(0)
-            print(f"[DEBUG] output tensor reshaped to 2D: {audio_tensor.shape}")
 
-        print("[DEBUG] Synthesis pipeline complete")
-        return {"waveform": audio_tensor, "sample_rate": sample_rate}, cleaned_text
+        # Optional silence removal
+        if remove_silence:
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as outf:
+                sf.write(outf.name, audio_tensor.cpu().numpy().T, sr_out)
+                remove_silence_for_generated_wav(outf.name)
+                audio_tensor, sr_out = torchaudio.load(outf.name)
+                os.unlink(outf.name)
+
+        return {"waveform": audio_tensor, "sample_rate": sr_out}, cleaned_text
