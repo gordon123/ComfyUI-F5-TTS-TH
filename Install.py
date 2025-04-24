@@ -84,3 +84,4 @@ class Install:
     def has_model_file():
         model_path = os.path.join(Install.model_dir, Install.default_model)
         return os.path.exists(model_path)
+

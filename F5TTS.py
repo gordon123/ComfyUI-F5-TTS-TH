@@ -172,3 +172,4 @@ class F5TTSAudioInputs:
         audio = F5TTSThai().generate(voice, speech, seed, speed, model_name)
 
         return (audio, speech)
+

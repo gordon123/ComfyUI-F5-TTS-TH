@@ -11,3 +11,4 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "F5TTSAudioInputs":   "🇹🇭 F5‑TTS‑TH รับข้อมูลจาก Inputs 🇹🇭",
     "SaveAudioAndText": "💾 🇹🇭 Save Audio & Text TH",
 }
+
