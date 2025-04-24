@@ -29,18 +29,6 @@ from f5_tts.cleantext.th_repeat import process_thai_repeat
 sys.path.pop(0)
 
 class F5TTS_Advance:
-    # Widget properties: expose parameters on the node
-    PROPERTIES = {
-        "remove_silence": ("BOOL", {"default": True}),
-        "cross_fade_duration": ("FLOAT", {"default": 0.15, "min": 0.0, "max": 1.0, "step": 0.01}),
-        "nfe_step": ("INT", {"default": 32, "min": 1, "max": 128}),
-        "cfg_strength": ("FLOAT", {"default": 2.0, "min": 0.0, "max": 10.0, "step": 0.1}),
-        "sway_sampling_coef": ("FLOAT", {"default": -1.0, "min": -5.0, "max": 5.0, "step": 0.1}),
-        "fix_duration": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 30.0, "step": 0.1}),
-        "max_chars": ("INT", {"default": 250, "min": 1, "max": 1000}),
-        "speed": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 5.0, "step": 0.1}),
-    }
-
     @classmethod
     def INPUT_TYPES(cls):
         model_choices = [
@@ -55,6 +43,8 @@ class F5TTS_Advance:
                 "text": ("STRING", {"multiline": True, "default": "สวัสดีครับ"}),
                 "model_name": (model_choices, {"default": "model_500000.pt"}),
                 "seed": ("INT", {"default": -1, "min": -1}),
+            },
+            "optional": {
                 "remove_silence": ("BOOL", {"default": True}),
                 "speed": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 5.0, "step": 0.1}),
                 "cross_fade_duration": ("FLOAT", {"default": 0.15, "min": 0.0, "max": 1.0, "step": 0.01}),
@@ -79,13 +69,13 @@ class F5TTS_Advance:
         model_name="model_500000.pt",
         seed=-1,
         remove_silence=True,
+        speed=1.0,
         cross_fade_duration=0.15,
         nfe_step=32,
         cfg_strength=2.0,
         sway_sampling_coef=-1.0,
         fix_duration=0.0,
         max_chars=250,
-        speed=1.0,
     ):
         # Clean input text
         cleaned_text = process_thai_repeat(replace_numbers_with_thai(text))
