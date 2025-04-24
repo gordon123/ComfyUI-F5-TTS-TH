@@ -44,7 +44,7 @@ git clone https://github.com/gordon123/ComfyUI-F5-TTS-TH.git
 ### 🔧 2. Clone repository และติดตั้ง F5-TTS-THAI (แบบ submodule)
 
 ```
-git clone https://github.com/yourname/ComfyUI-F5-TTS-TH.git
+git clone https://github.com/gordon123/ComfyUI-F5-TTS-TH.git
 cd ComfyUI-F5-TTS-TH
 git submodule update --init --recursive
 ```
