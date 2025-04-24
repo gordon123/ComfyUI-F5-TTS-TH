@@ -140,7 +140,7 @@ class F5TTS_Advance:
             nfe_step=nfe_step,
             cfg_strength=cfg_strength,
             set_max_chars=max_chars,
-            progress=ProgressBar(),
+            
             mel_spec_type="vocos",
             device=device
         )
