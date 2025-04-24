@@ -1,1 +1,4 @@
 
+[submodule "submodules/F5TTS-on-Pod"]
+	path = submodules/F5TTS-on-Pod
+	url = https://github.com/gordon123/F5TTS-on-Pod.git
