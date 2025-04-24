@@ -42,7 +42,7 @@ class F5TTS_Advance:
     }
 
     @classmethod
-    def INPUT_TYPES(cls):(cls):
+    def INPUT_TYPES(cls):
         model_choices = [
             "model_100000.pt", "model_130000.pt", "model_150000.pt", "model_200000.pt",
             "model_250000.pt", "model_350000.pt", "model_430000.pt", "model_475000.pt", "model_500000.pt"
