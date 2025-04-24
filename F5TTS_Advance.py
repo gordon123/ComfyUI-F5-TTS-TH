@@ -39,7 +39,6 @@ class F5TTS_Advance:
             "model_475000.pt", "model_475000_FP16.pt",
             "model_500000.pt", "model_500000_FP16.pt"
         ]
-        print(f"[DEBUG] INPUT_TYPES model choices: {model_choices}")
         return {
             "required": {
                 "sample_audio": ("AUDIO",),
@@ -83,29 +82,37 @@ class F5TTS_Advance:
     ):
         # Clean input text
         cleaned_text = process_thai_repeat(replace_numbers_with_thai(text))
+        print(f"[DEBUG] cleaned_text: {cleaned_text}")
 
         # Prepare reference audio
         waveform = sample_audio["waveform"].float().contiguous()
+        print(f"[DEBUG] ref raw waveform shape: {waveform.shape}")
         if waveform.ndim == 3:
             waveform = waveform.squeeze()
         elif waveform.ndim == 1:
             waveform = waveform.unsqueeze(0)
         sr = sample_audio["sample_rate"]
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-            sf.write(tmp.name, waveform.cpu().numpy().T, sr)
-            ref_path = tmp.name
-        ref_audio, ref_text = preprocess_ref_audio_text(ref_path, sample_text)
-        os.unlink(ref_path)
+        print(f"[DEBUG] ref sample_rate: {sr}")
+        # save reference for debugging
+        ref_tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+        sf.write(ref_tmp.name, waveform.cpu().numpy().T, sr)
+        print(f"[DEBUG] wrote reference WAV: {ref_tmp.name}")
 
-        # Load config
+        ref_audio, ref_text = preprocess_ref_audio_text(ref_tmp.name, sample_text)
+        print(f"[DEBUG] preprocess_ref_audio_text -> ref_audio: {ref_audio}, ref_text: {ref_text}")
+        os.unlink(ref_tmp.name)
+
+        # Load model config
         cfg_folder = os.path.join(Install.base_path, "src", "f5_tts", "configs")
         cfg_candidates = ["F5TTS_Base.yaml", "F5TTS_Base_train.yaml"]
-        cfg_path = next((os.path.join(cfg_folder, c) for c in cfg_candidates if os.path.exists(os.path.join(cfg_folder, c))), None)
+        cfg_path = next((os.path.join(cfg_folder, c) for c in cfg_candidates
+                         if os.path.exists(os.path.join(cfg_folder, c))), None)
         if not cfg_path:
             raise FileNotFoundError("Config file not found in configs")
         model_cfg = OmegaConf.load(cfg_path).model.arch
+        print(f"[DEBUG] Using cfg_path: {cfg_path}")
 
-        # Prepare model & vocab
+        # Prepare model & vocab paths
         model_dir = os.path.join(Install.base_path, "model")
         os.makedirs(model_dir, exist_ok=True)
         model_path = os.path.join(model_dir, model_name)
@@ -113,20 +120,35 @@ class F5TTS_Advance:
         os.makedirs(vocab_dir, exist_ok=True)
         vocab_path = os.path.join(vocab_dir, "vocab.txt")
         if not os.path.exists(model_path):
-            urllib.request.urlretrieve(f"https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/model/{model_name}", model_path)
+            print(f"[DEBUG] Downloading model: {model_name}")
+            urllib.request.urlretrieve(
+                f"https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/model/{model_name}",
+                model_path
+            )
         if not os.path.exists(vocab_path):
-            urllib.request.urlretrieve("https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/vocab.txt", vocab_path)
+            print("[DEBUG] Downloading vocab.txt")
+            urllib.request.urlretrieve(
+                "https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/vocab.txt",
+                vocab_path
+            )
 
         # Load model and vocoder
+        print(f"[DEBUG] Loading model from: {model_path}")
         model = load_model(DiT, model_cfg, model_path, vocab_file=vocab_path, mel_spec_type="vocos")
         vocoder = load_vocoder("vocos")
         device = comfy.model_management.get_torch_device()
         model.to(device)
         vocoder.to(device)
+        print(f"[DEBUG] Model and vocoder on device: {device}")
 
         # Seed
         if seed >= 0:
             torch.manual_seed(seed)
+            print(f"[DEBUG] seed set to: {seed}")
+
+        # fix_duration: 0 -> None
+        fd = None if fix_duration == 0.0 else fix_duration
+        print(f"[DEBUG] Parameters: speed={speed}, cross_fade_duration={cross_fade_duration}, nfe_step={nfe_step}, cfg_strength={cfg_strength}, sway_sampling_coef={sway_sampling_coef}, fix_duration={fd}, max_chars={max_chars}")
 
         # Inference
         audio_np, sr_out, _ = infer_process(
@@ -140,21 +162,30 @@ class F5TTS_Advance:
             nfe_step=nfe_step,
             cfg_strength=cfg_strength,
             sway_sampling_coef=sway_sampling_coef,
-            fix_duration=fix_duration,
+            fix_duration=fd,
             set_max_chars=max_chars,
             mel_spec_type="vocos",
             device=device
         )
+        print(f"[DEBUG] infer_process output: shape={audio_np.shape}, dtype={audio_np.dtype}, min={audio_np.min()}, max={audio_np.max()}")
+
+        # write raw for debug
+        raw_debug = "debug_raw.wav"
+        sf.write(raw_debug, audio_np, sr_out)
+        print(f"[DEBUG] wrote raw debug file: {raw_debug}")
+
         audio_tensor = torch.from_numpy(audio_np)
         if audio_tensor.ndim == 1:
             audio_tensor = audio_tensor.unsqueeze(0)
 
         # Remove silence if requested
         if remove_silence:
-            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as outf:
-                sf.write(outf.name, audio_tensor.cpu().numpy().T, sr_out)
-                remove_silence_for_generated_wav(outf.name)
-                audio_tensor, sr_out = torchaudio.load(outf.name)
-                os.unlink(outf.name)
+            print("[DEBUG] Removing silence from generated audio...")
+            tmp_out = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+            sf.write(tmp_out.name, audio_tensor.cpu().numpy().T, sr_out)
+            remove_silence_for_generated_wav(tmp_out.name)
+            audio_tensor, sr_out = torchaudio.load(tmp_out.name)
+            os.unlink(tmp_out.name)
+            print(f"[DEBUG] Post-silence removal tensor shape: {audio_tensor.shape}")
 
         return {"waveform": audio_tensor, "sample_rate": sr_out}, cleaned_text
