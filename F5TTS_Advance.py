@@ -34,9 +34,8 @@ class F5TTS_Advance:
     def INPUT_TYPES(cls):
         model_choices = [
             "model_100000.pt", "model_130000.pt", "model_150000.pt", "model_200000.pt",
-            "model_250000.pt", "model_350000.pt", "model_430000.pt", "model_475000.pt", "model_500000.pt",
+            "model_250000.pt", "model_350000.pt", "model_430000.pt", "model_475000.pt", "model_500000.pt"
         ]
-        print(f"[DEBUG] INPUT_TYPES model choices: {model_choices}")
         return {
             "required": {
                 "sample_audio": ("AUDIO",),
@@ -44,46 +43,27 @@ class F5TTS_Advance:
                 "text": ("STRING", {"multiline": True, "default": "สวัสดีครับ"}),
                 "model_name": (model_choices, {"default": "model_500000.pt"}),
                 "seed": ("INT", {"default": -1, "min": -1}),
-                "speed": ("FLOAT", {"default": 1.0, "min": 0.5, "max": 2.0, "step": 0.1}),
+                "speed": ("FLOAT", {"default": 1.0, "min": 0.5, "max": 2.0, "step": 0.1})
             },
             "optional": {
                 "remove_silence": ("BOOL", {"default": True}),
                 "cross_fade_duration": ("FLOAT", {"default": 0.15, "min": 0.0, "max": 1.0, "step": 0.01}),
                 "nfe_step": ("INT", {"default": 32, "min": 1, "max": 128}),
                 "cfg_strength": ("INT", {"default": 2, "min": 0, "max": 10}),
-                "max_chars": ("INT", {"default": 250, "min": 1, "max": 1000}),
+                "max_chars": ("INT", {"default": 250, "min": 1, "max": 1000})
             }
-        }"required": {
-            "sample_audio": ("AUDIO",),
-            "sample_text": ("STRING", {"default": "Text of sample_audio"}),
-            "text": ("STRING", {"multiline": True, "default": "สวัสดีครับ"}),
-            "model_name": (model_choices, {"default": "model_500000.pt"}),
-            "seed": ("INT", {"default": -1, "min": -1}),
-            "speed": ("FLOAT", {"default": 1.0, "min": 0.5, "max": 2.0, "step": 0.1}),
-        }}
-
-    # Properties render as UI controls instead of sockets
-    PROPERTIES = {
-        "remove_silence": ("BOOL", {"default": True}),
-        "cross_fade_duration": ("FLOAT", {"default": 0.15, "min": 0.0, "max": 1.0, "step": 0.01}),
-        "nfe_step": ("INT", {"default": 32, "min": 1, "max": 128}),
-        "cfg_strength": ("INT", {"default": 2, "min": 0, "max": 10}),
-        "max_chars": ("INT", {"default": 250, "min": 1, "max": 1000}),
-    }
+        }
 
     RETURN_TYPES = ("AUDIO", "STRING")
     RETURN_NAMES = ("audio", "text")
     FUNCTION = "synthesize"
     CATEGORY = "🎤 Thai TTS"
 
-        RETURN_TYPES = ("AUDIO", "STRING")
-    RETURN_NAMES = ("audio", "text")
-    FUNCTION = "synthesize"
-    CATEGORY = "🎤 Thai TTS"
-
     def synthesize(
         self,
-        sample_audio, sample_text, text,
+        sample_audio,
+        sample_text,
+        text,
         model_name="model_500000.pt",
         seed=-1,
         speed=1.0,
@@ -96,55 +76,65 @@ class F5TTS_Advance:
         # Clean input text
         cleaned_text = process_thai_repeat(replace_numbers_with_thai(text))
 
-        # Prepare reference audio and save temp WAV
+        # Prepare reference audio
         waveform = sample_audio["waveform"].float().contiguous()
         if waveform.ndim == 3:
             waveform = waveform.squeeze()
         elif waveform.ndim == 1:
             waveform = waveform.unsqueeze(0)
         sr = sample_audio["sample_rate"]
+        # Save temp reference WAV
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
             sf.write(tmp.name, waveform.cpu().numpy().T, sr)
             ref_path = tmp.name
         ref_audio, ref_text = preprocess_ref_audio_text(ref_path, sample_text)
         os.unlink(ref_path)
 
-        # Load config
+        # Load model config
         cfg_folder = os.path.join(Install.base_path, "src", "f5_tts", "configs")
         cfg_candidates = ["F5TTS_Base.yaml", "F5TTS_Base_train.yaml"]
         cfg_path = next((os.path.join(cfg_folder, c) for c in cfg_candidates if os.path.exists(os.path.join(cfg_folder, c))), None)
         if not cfg_path:
-            raise FileNotFoundError("Config not found")
+            raise FileNotFoundError("Config file not found in submodule configs")
         model_cfg = OmegaConf.load(cfg_path).model.arch
 
-        # Prepare model & vocab
-        mdl_dir = os.path.join(Install.base_path, "model")
-        os.makedirs(mdl_dir, exist_ok=True)
-        mdl_path = os.path.join(mdl_dir, model_name)
-        vcb_dir = os.path.join(Install.base_path, "vocab")
-        os.makedirs(vcb_dir, exist_ok=True)
-        vcb_path = os.path.join(vcb_dir, "vocab.txt")
-        if not os.path.exists(mdl_path):
+        # Prepare model and vocab paths
+        model_dir = os.path.join(Install.base_path, "model")
+        os.makedirs(model_dir, exist_ok=True)
+        model_path = os.path.join(model_dir, model_name)
+        vocab_dir = os.path.join(Install.base_path, "vocab")
+        os.makedirs(vocab_dir, exist_ok=True)
+        vocab_path = os.path.join(vocab_dir, "vocab.txt")
+        # Download model/vocab if missing
+        if not os.path.exists(model_path):
             urllib.request.urlretrieve(
-                f"https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/model/{model_name}", mdl_path)
-        if not os.path.exists(vcb_path):
+                f"https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/model/{model_name}",
+                model_path
+            )
+        if not os.path.exists(vocab_path):
             urllib.request.urlretrieve(
-                "https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/vocab.txt", vcb_path)
+                "https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/vocab.txt",
+                vocab_path
+            )
 
-        # Load model
-        model = load_model(DiT, model_cfg, mdl_path, vocab_file=vcb_path, mel_spec_type="vocos")
+        # Load model and vocoder
+        model = load_model(DiT, model_cfg, model_path, vocab_file=vocab_path, mel_spec_type="vocos")
         vocoder = load_vocoder("vocos")
         device = comfy.model_management.get_torch_device()
-        model.to(device); vocoder.to(device)
+        model.to(device)
+        vocoder.to(device)
 
-        # Seed
+        # Seed for reproducibility
         if seed >= 0:
             torch.manual_seed(seed)
 
         # Inference
         audio_np, sr_out, _ = infer_process(
-            ref_audio, ref_text, cleaned_text,
-            model, vocoder=vocoder,
+            ref_audio,
+            ref_text,
+            cleaned_text,
+            model,
+            vocoder=vocoder,
             speed=speed,
             cross_fade_duration=cross_fade_duration,
             nfe_step=nfe_step,
