@@ -68,18 +68,22 @@ pip install -r requirements.txt
 torch==2.1.2+cu126
 torchaudio==2.1.2+cu126
 --extra-index-url https://download.pytorch.org/whl/cu126
+
 # ✅ PyTorch with CUDA 11.8 for older GPUs, if needed
 torch==2.1.2+cu118
 torchaudio==2.1.2+cu118
 --extra-index-url https://download.pytorch.org/whl/cu118
+
 # ✅ PyTorch with CPU only
 torch==2.1.2
 torchaudio==2.1.2
+
 # ✅ PyTorch with MPS (Apple Silicon)
 torch==2.1.2
 torchaudio==2.1.2
-# ✅ PyTorch with ROCm (AMD GPUs)      
 
+# ✅ PyTorch with ROCm (AMD GPUs)      
+---
 ```
 # 6. ติดตั้ง ffmpeg
 ```
