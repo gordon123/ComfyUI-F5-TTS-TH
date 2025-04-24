@@ -39,7 +39,14 @@ class F5TTS_Advance:
         return {
             "required": {
                 "sample_audio": ("AUDIO",),
-                "sample_text": ("STRING", {"default": "Text of sample_audio"}),
+                "sample_text": ("STRING", {"default": "Text of sample_audio"}
+
+    RETURN_TYPES = ("AUDIO", "STRING")
+    RETURN_NAMES = ("audio", "text")
+    FUNCTION = "synthesize"
+    CATEGORY = "🎤 Thai TTS"
+
+    def synthesize,
                 "text": ("STRING", {"multiline": True, "default": "สวัสดีครับ"}),
                 "model_name": (model_choices, {"default": "model_500000.pt"}),
                 "seed": ("INT", {"default": -1, "min": -1}),
