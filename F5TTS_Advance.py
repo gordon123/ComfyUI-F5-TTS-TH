@@ -43,12 +43,16 @@ class F5TTS_Advance:
             "model_name": (model_choices, {"default": "model_500000.pt"}),
             "seed": ("INT", {"default": -1, "min": -1}),
             "speed": ("FLOAT", {"default": 1.0, "min": 0.5, "max": 2.0, "step": 0.1}),
-            "remove_silence": ("BOOL", {"default": True}),
-            "cross_fade_duration": ("FLOAT", {"default": 0.15, "min": 0.0, "max": 1.0, "step": 0.01}),
-            "nfe_step": ("INT", {"default": 32, "min": 1, "max": 128}),
-            "cfg_strength": ("INT", {"default": 2, "min": 0, "max": 10}),
-            "max_chars": ("INT", {"default": 250, "min": 1, "max": 1000}),
         }}
+
+    # Properties render as UI controls instead of sockets
+    PROPERTIES = {
+        "remove_silence": ("BOOL", {"default": True}),
+        "cross_fade_duration": ("FLOAT", {"default": 0.15, "min": 0.0, "max": 1.0, "step": 0.01}),
+        "nfe_step": ("INT", {"default": 32, "min": 1, "max": 128}),
+        "cfg_strength": ("INT", {"default": 2, "min": 0, "max": 10}),
+        "max_chars": ("INT", {"default": 250, "min": 1, "max": 1000}),
+    }
 
     RETURN_TYPES = ("AUDIO", "STRING")
     RETURN_NAMES = ("audio", "text")
