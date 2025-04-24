@@ -8,7 +8,6 @@ from pathlib import Path
 from omegaconf import OmegaConf
 import comfy
 from comfy.utils import ProgressBar
-from cached_path import cached_path
 from .Install import Install
 import urllib.request
 
@@ -16,7 +15,8 @@ import urllib.request
 Install.check_install()
 
 # Add F5-TTS-THAI source to Python path
-f5tts_src = os.path.join(Install.f5TTSPath, "src")
+# Updated to use base_path instead of deprecated f5TTSPath
+f5tts_src = os.path.join(Install.base_path, "src")
 sys.path.insert(0, f5tts_src)
 from f5_tts.model import DiT
 from f5_tts.infer.utils_infer import (
@@ -50,14 +50,15 @@ class F5TTSThai:
 
     def load_model_thai(self, model_name="model_475000_FP16.pt"):
         print(f"🌟 Loading model: {model_name}")
-        model_path = os.path.join(Install.f5TTSPath, "ckpts", "thai", model_name)
-        vocab_path = os.path.join(Install.f5TTSPath, "ckpts", "thai", "vocab.txt")
+        # Use base_path for model and vocab locations
+        model_path = os.path.join(Install.base_path, "ckpts", "thai", model_name)
+        vocab_path = os.path.join(Install.base_path, "vocab", "vocab.txt")
 
         # Auto-download if not exist
         if not os.path.exists(model_path):
             print(f"⬇️ Downloading model {model_name}...")
             urllib.request.urlretrieve(
-                f"https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/{model_name}",
+                f"{Install.model_url_base}/{model_name}",
                 model_path
             )
             print(f"✅ Model downloaded: {model_name}")
@@ -65,7 +66,7 @@ class F5TTSThai:
         if not os.path.exists(vocab_path):
             print("⬇️ Downloading vocab.txt...")
             urllib.request.urlretrieve(
-                "https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/vocab.txt",
+                f"{Install.model_url_base}/vocab.txt",
                 vocab_path
             )
             print("✅ vocab.txt downloaded.")
@@ -76,7 +77,7 @@ class F5TTSThai:
         ]
         cfg_path = None
         for candidate in cfg_candidates:
-            potential_path = os.path.join(Install.f5TTSPath, "src/f5_tts/configs", candidate)
+            potential_path = os.path.join(Install.base_path, "src", "f5_tts", "configs", candidate)
             if os.path.exists(potential_path):
                 cfg_path = potential_path
                 print(f"✅ Found config: {cfg_path}")
@@ -111,17 +112,11 @@ class F5TTSThai:
             print(f"↪️ Reshaped to 2D: {waveform.shape}")
         return {"waveform": waveform, "sample_rate": sample_rate, "text": text}
 
-
 class F5TTSAudioInputs:
     @classmethod
     def INPUT_TYPES(cls):
-        # 🔧 ใช้ค่าคงที่เพื่อให้ dropdown แสดงตัวเลือกแม้ยังไม่ดาวน์โหลด
-        model_choices = [
-            "model_475000.pt",
-            "model_475000_FP16.pt",
-            "model_500000.pt",
-            "model_500000_FP16.pt"
-        ]
+        # 🔧 Use static list for dropdown
+        model_choices = F5TTSThai.get_available_models()
         print("📃 Available model choices:", model_choices)
         return {"required": {
             "sample_audio": ("AUDIO",),
@@ -172,4 +167,3 @@ class F5TTSAudioInputs:
         audio = F5TTSThai().generate(voice, speech, seed, speed, model_name)
 
         return (audio, speech)
-
