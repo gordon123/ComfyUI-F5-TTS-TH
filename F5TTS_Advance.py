@@ -39,14 +39,7 @@ class F5TTS_Advance:
         return {
             "required": {
                 "sample_audio": ("AUDIO",),
-                "sample_text": ("STRING", {"default": "Text of sample_audio"}
-
-    RETURN_TYPES = ("AUDIO", "STRING")
-    RETURN_NAMES = ("audio", "text")
-    FUNCTION = "synthesize"
-    CATEGORY = "🎤 Thai TTS"
-
-    def synthesize,
+                "sample_text": ("STRING", {"default": "Text of sample_audio"}),
                 "text": ("STRING", {"multiline": True, "default": "สวัสดีครับ"}),
                 "model_name": (model_choices, {"default": "model_500000.pt"}),
                 "seed": ("INT", {"default": -1, "min": -1}),
@@ -58,7 +51,8 @@ class F5TTS_Advance:
                 "max_chars": ("INT", {"default": 250, "min": 1, "max": 1000})
             }
         }
-RETURN_TYPES = ("AUDIO", "STRING")
+
+    RETURN_TYPES = ("AUDIO", "STRING")
     RETURN_NAMES = ("audio", "text")
     FUNCTION = "synthesize"
     CATEGORY = "🎤 Thai TTS"
@@ -87,7 +81,6 @@ RETURN_TYPES = ("AUDIO", "STRING")
         elif waveform.ndim == 1:
             waveform = waveform.unsqueeze(0)
         sr = sample_audio["sample_rate"]
-        # Save temp reference WAV
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
             sf.write(tmp.name, waveform.cpu().numpy().T, sr)
             ref_path = tmp.name
@@ -97,7 +90,10 @@ RETURN_TYPES = ("AUDIO", "STRING")
         # Load model config
         cfg_folder = os.path.join(Install.base_path, "src", "f5_tts", "configs")
         cfg_candidates = ["F5TTS_Base.yaml", "F5TTS_Base_train.yaml"]
-        cfg_path = next((os.path.join(cfg_folder, c) for c in cfg_candidates if os.path.exists(os.path.join(cfg_folder, c))), None)
+        cfg_path = next(
+            (os.path.join(cfg_folder, c) for c in cfg_candidates if os.path.exists(os.path.join(cfg_folder, c))),
+            None
+        )
         if not cfg_path:
             raise FileNotFoundError("Config file not found in submodule configs")
         model_cfg = OmegaConf.load(cfg_path).model.arch
@@ -109,7 +105,6 @@ RETURN_TYPES = ("AUDIO", "STRING")
         vocab_dir = os.path.join(Install.base_path, "vocab")
         os.makedirs(vocab_dir, exist_ok=True)
         vocab_path = os.path.join(vocab_dir, "vocab.txt")
-        # Download model/vocab if missing
         if not os.path.exists(model_path):
             urllib.request.urlretrieve(
                 f"https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/model/{model_name}",
@@ -128,7 +123,7 @@ RETURN_TYPES = ("AUDIO", "STRING")
         model.to(device)
         vocoder.to(device)
 
-        # Seed for reproducibility
+        # Seed
         if seed >= 0:
             torch.manual_seed(seed)
 
@@ -144,7 +139,6 @@ RETURN_TYPES = ("AUDIO", "STRING")
             nfe_step=nfe_step,
             cfg_strength=cfg_strength,
             set_max_chars=max_chars,
-            
             mel_spec_type="vocos",
             device=device
         )
