@@ -106,10 +106,15 @@ class F5TTS_Advance:
             raise FileNotFoundError("Config file not found in submodule configs")
         model_cfg = OmegaConf.load(cfg_path).model.arch
 
-        # Prepare model and vocab paths
-        model_path = os.path.join(Install.base_path, "model", model_name)
-        vocab_path = os.path.join(Install.base_path, "vocab.txt")
-        print(f"[DEBUG] model_path: {model_path}, vocab_path: {vocab_path}")
+        # Prepare model and vocab paths using 'model/' and 'vocab/' directories
+        model_dir = os.path.join(Install.base_path, "model")
+        os.makedirs(model_dir, exist_ok=True)
+        model_path = os.path.join(model_dir, model_name)
+        vocab_dir = os.path.join(Install.base_path, "vocab")
+        os.makedirs(vocab_dir, exist_ok=True)
+        vocab_path = os.path.join(vocab_dir, "vocab.txt")
+        print(f"[DEBUG] model_dir: {model_dir}, model_path: {model_path}, vocab_dir: {vocab_dir}, vocab_path: {vocab_path}")
+
 
         # Download if missing
         if not os.path.exists(model_path):
