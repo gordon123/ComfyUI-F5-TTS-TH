@@ -28,6 +28,9 @@ from f5_tts.cleantext.number_tha import replace_numbers_with_thai
 from f5_tts.cleantext.th_repeat import process_thai_repeat
 # Import English transliteration
 from f5_tts.cleantext.ARPABET2ThaiScript import eng_to_thai_translit
+from f5_tts.cleantext.number_tha import replace_numbers_with_thai
+from f5_tts.cleantext.th_repeat import process_thai_repeat
+from f5_tts.cleantext.ARPABET2ThaiScript import eng_to_thai_translit  # เพิ่ม import ของ transliteration
 sys.path.pop(0)
 
 class F5TTS_Advance:
