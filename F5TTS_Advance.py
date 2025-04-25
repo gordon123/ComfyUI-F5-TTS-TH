@@ -12,14 +12,17 @@ import urllib.request
 # Ensure the submodule is initialized
 Install.check_install()
 
-# Add main submodule source to Python path for inference
+# ——— DEBUG: ตรวจสอบ sys.path insertion ———
 f5tts_src = os.path.join(Install.base_path, "src")
+print(f"[DEBUG] Inserting main f5tts_src to sys.path: {f5tts_src}")
 sys.path.insert(0, f5tts_src)
-
-# Add Pod submodule source for ARPABET2ThaiScript
 pod_src = os.path.join(Install.base_path, "submodules", "F5TTS-on-Pod", "src")
+print(f"[DEBUG] Inserting Pod src to sys.path: {pod_src}")
 sys.path.insert(0, pod_src)
+print(f"[DEBUG] sys.path[0:4] = {sys.path[:4]}")
+# ————————————————————————————————
 
+# Imports from both sources
 from f5_tts.model import DiT
 from f5_tts.infer.utils_infer import (
     load_model,
@@ -34,9 +37,10 @@ from f5_tts.cleantext.th_repeat import process_thai_repeat
 # Import English transliteration
 from f5_tts.cleantext.ARPABET2ThaiScript import eng_to_thai_translit
 
-# Cleanup Python path
-sys.path.pop(0)  # remove pod_src
-sys.path.pop(0)  # remove f5tts_src
+# Cleanup sys.path to not leak modifications
+sys.path.pop(0)  # removes pod_src
+sys.path.pop(0)  # removes f5tts_src
+print(f"[DEBUG] sys.path after cleanup: {sys.path[:4]}")
 
 class F5TTS_Advance:
     @classmethod
@@ -100,12 +104,13 @@ class F5TTS_Advance:
 
         # Prepare reference audio
         waveform = sample_audio["waveform"].float().contiguous()
+        print(f"[DEBUG] ref raw waveform shape: {waveform.shape}")
         if waveform.ndim == 3:
             waveform = waveform.squeeze()
         elif waveform.ndim == 1:
             waveform = waveform.unsqueeze(0)
         sr = sample_audio["sample_rate"]
-        # save reference for debugging
+
         ref_tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
         sf.write(ref_tmp.name, waveform.cpu().numpy().T, sr)
         print(f"[DEBUG] wrote reference WAV: {ref_tmp.name}")
@@ -134,11 +139,13 @@ class F5TTS_Advance:
         os.makedirs(vocab_dir, exist_ok=True)
         vocab_path = os.path.join(vocab_dir, "vocab.txt")
         if not os.path.exists(model_path):
+            print(f"[DEBUG] Downloading model: {model_name}")
             urllib.request.urlretrieve(
                 f"https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/model/{model_name}",
                 model_path
             )
         if not os.path.exists(vocab_path):
+            print("[DEBUG] Downloading vocab.txt")
             urllib.request.urlretrieve(
                 "https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/vocab.txt",
                 vocab_path
@@ -181,7 +188,6 @@ class F5TTS_Advance:
         )
         print(f"[DEBUG] infer_process output: shape={audio_np.shape}, dtype={audio_np.dtype}, min={audio_np.min()}, max={audio_np.max()}")
 
-        # write raw for debug
         raw_debug = "debug_raw.wav"
         sf.write(raw_debug, audio_np, sr_out)
         print(f"[DEBUG] wrote raw debug file: {raw_debug}")
