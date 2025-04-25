@@ -41,18 +41,24 @@ git clone https://github.com/gordon123/ComfyUI-F5-TTS-TH.git
 
 ## 🚀 วิธีติดตั้ง (Installation)
 
+ถ้าใคร Install [ComfyUI](https://github.com/gordon123/lean2ComfyUI/blob/main/(Thai)%20%23EP7.%20Install%20witn%20command%20line.md) ด้วย command line ตามนี้
+
+
 ### 🔧 2. Clone repository และติดตั้ง F5-TTS-THAI (แบบ submodule)
 
 ```
 git clone https://github.com/gordon123/ComfyUI-F5-TTS-TH.git
+
 cd ComfyUI-F5-TTS-TH
+
 git submodule update --init --recursive
 ```
 
-### 3. สร้าง virtual env 
+### 3. สร้าง virtual env ถ้าทำแล้วข้ามไป
 ```
 python -m venv venv
-source venv/bin/activate  # หรือ call venv/Scripts/activate บน Windows
+
+source venv/bin/activate
 ```
 
 ### 4. อัปเกรด pip
@@ -70,7 +76,9 @@ pip install -r requirements.txt
 ### 🔥 CUDA 12.6 (RTX 30/40 ซีรีส์ และ ComfyUI บน CUDA 12.6)
 ```
 pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu126
-or
+ผมทดลองอันนี้ จาก ComfyUI ใช้ได้แล้ว
+
+ถ้าใครมีปัญหาเรื่องเวอชั่น pytorch, torch, torchvision, torchaudio ทดลองตามนี้
 pip install torch==2.1.2+cu126  torchvision==0.15.2+cu126  torchaudio==2.1.2+cu126 --extra-index-url https://download.pytorch.org/whl/cu126
 ```
 
@@ -107,7 +115,10 @@ apt update && apt install -y ffmpeg
 |-----------|------------|-------|
 | **rgthree-comfy** | ระบบ UI Manager + ฟีเจอร์จัด Node เป็นกลุ่ม, ตัวเลือก dropdown, dynamic inputs | [github.com/rgthree/rgthree-comfy](https://github.com/rgthree/rgthree-comfy) |
 | **ComfyUI Web Viewer** | ใช้ `VrchAudioSaverNode` สำหรับบันทึกเสียงพร้อม metadata ถูกต้อง ไม่เจอ codec error | [github.com/VrchStudio/comfyui-web-viewer](https://github.com/VrchStudio/comfyui-web-viewer) |
-| **ComfyUI Whisper** | แปลงเสียงเป็นข้อความ (speech-to-text) รองรับภาษาไทย | [github.com/ltdrdata/ComfyUI-Whisper](https://github.com/ltdrdata/ComfyUI-Whisper) |
+
+Upload audio เสียงของเรา 
+https://huggingface.co/spaces/hf-audio/whisper-large-v3
+แล้วกด transcribe เพื่อ copy ข้อความมาใช้
 
 ---
 
