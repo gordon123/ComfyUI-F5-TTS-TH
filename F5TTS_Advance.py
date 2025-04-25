@@ -12,24 +12,27 @@ import urllib.request
 # Ensure the submodule is initialized
 Install.check_install()
 
-# Add main F5-TTS source to Python path
+# Insert path to submodule for f5_tts package
 f5tts_src = os.path.join(Install.base_path, "src")
 sys.path.insert(0, f5tts_src)
 
+# Import main inference tools
 from f5_tts.model import DiT
 from f5_tts.infer.utils_infer import (
     load_model,
     load_vocoder,
     preprocess_ref_audio_text,
     infer_process,
-    remove_silence_for_generated_wav
+    remove_silence_for_generated_wav,
 )
 # Import Thai text cleaning
 from f5_tts.cleantext.number_tha import replace_numbers_with_thai
 from f5_tts.cleantext.th_repeat import process_thai_repeat
+
+# Pop back the inserted path
 sys.path.pop(0)
 
-# Import English transliteration from local file
+# Import English-to-Thai transliteration from local file
 from .ARPABET2ThaiScript import eng_to_thai_translit
 
 class F5TTS_Advance:
@@ -84,63 +87,67 @@ class F5TTS_Advance:
         fix_duration=0.0,
         max_chars=250,
     ):
-        # Transliterate English to Thai script
-        text_translit = eng_to_thai_translit(text)
+        # 1. Transliterate English segments into Thai script
+        translit = eng_to_thai_translit(text)
+        print(f"[DEBUG] transliterated: {translit}")
 
-        # Clean text: numbers and repeats
-        cleaned_text = process_thai_repeat(replace_numbers_with_thai(text_translit))
+        # 2. Clean numbers and repeats
+        cleaned = process_thai_repeat(replace_numbers_with_thai(translit))
+        print(f"[DEBUG] cleaned_text: {cleaned}")
 
-        # Prepare reference audio
-        waveform = sample_audio["waveform"].float().contiguous()
-        if waveform.ndim == 3:
-            waveform = waveform.squeeze()
-        elif waveform.ndim == 1:
-            waveform = waveform.unsqueeze(0)
+        # 3. Prepare reference audio file
+        wav = sample_audio["waveform"].float().contiguous()
+        if wav.ndim == 3:
+            wav = wav.squeeze()
+        elif wav.ndim == 1:
+            wav = wav.unsqueeze(0)
         sr = sample_audio["sample_rate"]
-        tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
-        sf.write(tmp.name, waveform.cpu().numpy().T, sr)
-        ref_audio, ref_text = preprocess_ref_audio_text(tmp.name, sample_text)
-        os.unlink(tmp.name)
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmpf:
+            sf.write(tmpf.name, wav.cpu().numpy().T, sr)
+            ref_path = tmpf.name
+        ref_audio, ref_text = preprocess_ref_audio_text(ref_path, sample_text)
+        os.unlink(ref_path)
+        print(f"[DEBUG] ref_text: {ref_text}")
 
-        # Load config
-        cfg_folder = os.path.join(Install.base_path, "src", "f5_tts", "configs")
-        for cfg in ["F5TTS_Base.yaml", "F5TTS_Base_train.yaml"]:
-            path = os.path.join(cfg_folder, cfg)
-            if os.path.exists(path):
-                model_cfg = OmegaConf.load(path).model.arch
+        # 4. Load model config
+        cfg_dir = os.path.join(Install.base_path, "src", "f5_tts", "configs")
+        for fn in ["F5TTS_Base.yaml", "F5TTS_Base_train.yaml"]:
+            p = os.path.join(cfg_dir, fn)
+            if os.path.exists(p):
+                model_cfg = OmegaConf.load(p).model.arch
                 break
         else:
             raise FileNotFoundError("Config file not found")
 
-        # Model & vocab
-        model_dir = os.path.join(Install.base_path, "model"); os.makedirs(model_dir, exist_ok=True)
-        model_path = os.path.join(model_dir, model_name)
-        vocab_dir = os.path.join(Install.base_path, "vocab"); os.makedirs(vocab_dir, exist_ok=True)
-        vocab_path = os.path.join(vocab_dir, "vocab.txt")
-        if not os.path.exists(model_path):
+        # 5. Ensure model & vocab on disk
+        mdir = os.path.join(Install.base_path, "model"); os.makedirs(mdir, exist_ok=True)
+        mp = os.path.join(mdir, model_name)
+        vdir = os.path.join(Install.base_path, "vocab"); os.makedirs(vdir, exist_ok=True)
+        vp = os.path.join(vdir, "vocab.txt")
+        if not os.path.exists(mp):
             urllib.request.urlretrieve(
-                f"https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/model/{model_name}",
-                model_path
+                f"https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/model/{model_name}", mp
             )
-        if not os.path.exists(vocab_path):
+        if not os.path.exists(vp):
             urllib.request.urlretrieve(
-                "https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/vocab.txt",
-                vocab_path
+                "https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/vocab.txt", vp
             )
 
-        model = load_model(DiT, model_cfg, model_path, vocab_file=vocab_path, mel_spec_type="vocos")
+        # 6. Load model + vocoder
+        model = load_model(DiT, model_cfg, mp, vocab_file=vp, mel_spec_type="vocos")
         vocoder = load_vocoder("vocos")
         device = comfy.model_management.get_torch_device()
-        model.to(device); vocoder.to(device)
+        model.to(device)
+        vocoder.to(device)
         if seed >= 0:
             torch.manual_seed(seed)
 
-        # fix_duration compatibility
+        # 7. Prepare fix_duration arg
         fd = None if fix_duration == 0.0 else fix_duration
 
-        # Inference
+        # 8. Generate audio
         audio_np, sr_out, _ = infer_process(
-            ref_audio, ref_text, cleaned_text,
+            ref_audio, ref_text, cleaned,
             model, vocoder=vocoder,
             speed=speed,
             cross_fade_duration=cross_fade_duration,
@@ -152,16 +159,19 @@ class F5TTS_Advance:
             mel_spec_type="vocos",
             device=device
         )
+        print(f"[DEBUG] generated np: shape={audio_np.shape}, min={audio_np.min()}, max={audio_np.max()}")
+
+        # 9. Convert to tensor
         audio_tensor = torch.from_numpy(audio_np)
         if audio_tensor.ndim == 1:
             audio_tensor = audio_tensor.unsqueeze(0)
 
-        # Optional silence removal
+        # 10. Optional silence removal
         if remove_silence:
-            tmp2 = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
-            sf.write(tmp2.name, audio_tensor.cpu().numpy().T, sr_out)
-            remove_silence_for_generated_wav(tmp2.name)
-            audio_tensor, sr_out = torchaudio.load(tmp2.name)
-            os.unlink(tmp2.name)
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp2:
+                sf.write(tmp2.name, audio_tensor.cpu().numpy().T, sr_out)
+                remove_silence_for_generated_wav(tmp2.name)
+                audio_tensor, sr_out = torchaudio.load(tmp2.name)
+                os.unlink(tmp2.name)
 
-        return {"waveform": audio_tensor, "sample_rate": sr_out}, cleaned_text
+        return {"waveform": audio_tensor, "sample_rate": sr_out}, cleaned
