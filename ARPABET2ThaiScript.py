@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+# This script is part of a Thai TTS system that converts English text to Thai script using ARPAbet phonemes.
+# พยายการนี้เป็นส่วนหนึ่งของระบบ TTS ภาษาไทยที่แปลงข้อความภาษาอังกฤษเป็นอักษรไทยโดยใช้ ARPAbet phonemes
+# แต่ยังไม่เสร็จสมบูรณ์ ยังอ่านภษาอังกฤษไม่ออก เต็ม 100%
+
 import re
 import nltk
 
