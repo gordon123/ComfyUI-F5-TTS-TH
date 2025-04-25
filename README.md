@@ -69,54 +69,38 @@ pip install -r requirements.txt
 
 ### 🔥 CUDA 12.6 (RTX 30/40 ซีรีส์ และ ComfyUI บน CUDA 12.6)
 ```
-pip install \
-  torch==2.1.2+cu126 \
-  torchvision==0.15.2+cu126 \
-  torchaudio==2.1.2+cu126 \
-  --extra-index-url https://download.pytorch.org/whl/cu126
+pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu126
+or
+pip install torch==2.1.2+cu126  torchvision==0.15.2+cu126  torchaudio==2.1.2+cu126 --extra-index-url https://download.pytorch.org/whl/cu126
 ```
 
 ### 🛠️ CUDA 11.8 (GPU รุ่นเก่า หรือถ้าคุณใช้ cu118)
 ```
-pip install \
-  torch==2.1.2+cu118 \
-  torchvision==0.15.2+cu118 \
-  torchaudio==2.1.2+cu118 \
-  --extra-index-url https://download.pytorch.org/whl/cu118
+pip install torch  torchaudio  --extra-index-url https://download.pytorch.org/whl/cu118
+or
+pip install torch==2.3.0+cu118 torchaudio==2.3.0+cu118 --extra-index-url https://download.pytorch.org/whl/cu118
 ```
 
 ### 🖥️ CPU only (ไม่มี CUDA)
 ```
-pip install \
-  torch==2.1.2 \
-  torchvision==0.15.2 \
-  torchaudio==2.1.2
+pip install torch==2.1.2 torchvision==0.15.2 torchaudio==2.1.2
 ```
 
 ### 🍏 Mac (Apple Silicon)
 ```
-pip install \
-  torch==2.1.2 \
-  torchvision==0.15.2 \
-  torchaudio==2.1.2
+pip install  torch==2.1.2  torchvision==0.15.2  torchaudio==2.1.2
 ```
 
 ### 🐉 ROCm (AMD GPUs, สมมติ ROCm 6.4)
 ```
-pip install \
-  torch==2.1.2+rocm6.4 \
-  torchvision==0.15.2+rocm6.4 \
-  torchaudio==2.1.2+rocm6.4 \
-  --extra-index-url https://download.pytorch.org/whl/rocm6.4
+pip install  torch==2.1.2+rocm6.4  torchvision==0.15.2+rocm6.4 torchaudio==2.1.2+rocm6.4 --extra-index-url https://download.pytorch.org/whl/rocm6.4
 ```
-
 ---
 
 ### 6. ติดตั้ง ffmpeg
 ```
 apt update && apt install -y ffmpeg
 ```
-
 ### 7. Custom Node ที่แนะนำให้ติดตั้งเพิ่มเติม
 
 | ชื่อ Node | ใช้ทำอะไร | ลิงก์ |
