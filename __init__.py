@@ -12,7 +12,7 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "F5TTS_Advance":     "🎤 F5‑TTS‑Advance TH",
-    "F5TTSAudioInputs":  "🇹🇭 F5‑TTS‑TH รับข้อมูลจาก Inputs 🇹🇭",
-    "SaveAudioAndText":  "💾 🇹🇭 Save Audio & Text TH",
+    "F5TTS_Advance":     "🎤 F5‑TTS‑Advance TH 🇹🇭 ",
+    "F5TTSAudioInputs":  "🎤 F5‑TTS‑TH รับข้อมูลจาก Inputs 🇹🇭",
+    "SaveAudioAndText":  "💾 Save Audio & Text TH 🇹🇭 ",
 }
