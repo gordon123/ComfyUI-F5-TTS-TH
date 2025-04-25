@@ -69,12 +69,16 @@ pip install -r requirements.txt
 
 ### 🔥 CUDA 12.6 (RTX 30/40 ซีรีส์ และ ComfyUI บน CUDA 12.6)
 ```
+pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu126
+or
 pip install torch==2.1.2+cu126  torchvision==0.15.2+cu126  torchaudio==2.1.2+cu126 --extra-index-url https://download.pytorch.org/whl/cu126
 ```
 
 ### 🛠️ CUDA 11.8 (GPU รุ่นเก่า หรือถ้าคุณใช้ cu118)
 ```
-pip install torch==2.1.2+cu118 torchvision==0.15.2+cu118 torchaudio==2.1.2+cu118 --extra-index-url https://download.pytorch.org/whl/cu118
+pip install torch  torchaudio  --extra-index-url https://download.pytorch.org/whl/cu118
+or
+pip install torch==2.3.0+cu118 torchaudio==2.3.0+cu118 --extra-index-url https://download.pytorch.org/whl/cu118
 ```
 
 ### 🖥️ CPU only (ไม่มี CUDA)
