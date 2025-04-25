@@ -1,0 +1,373 @@
+{
+  "id": "666a17c0-b99e-49e5-a967-88690856e31e",
+  "revision": 0,
+  "last_node_id": 29,
+  "last_link_id": 43,
+  "nodes": [
+    {
+      "id": 3,
+      "type": "Display Any (rgthree)",
+      "pos": [
+        562.08544921875,
+        305.0792236328125
+      ],
+      "size": [
+        420.8365478515625,
+        88
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "source",
+          "type": "*",
+          "link": 1
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "rgthree-comfy",
+        "ver": "1.0.0",
+        "Node name for S&R": "Display Any (rgthree)"
+      },
+      "widgets_values": [
+        ""
+      ]
+    },
+    {
+      "id": 11,
+      "type": "SaveAudioAndText",
+      "pos": [
+        1037.005859375,
+        455.8665771484375
+      ],
+      "size": [
+        381.1627502441406,
+        156
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 42
+        },
+        {
+          "name": "text",
+          "type": "STRING",
+          "widget": {
+            "name": "text"
+          },
+          "link": 43
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            13
+          ]
+        },
+        {
+          "name": "filename",
+          "type": "STRING",
+          "links": [
+            37
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "gordon123/ComfyUI-F5-TTS-TH",
+        "ver": "621f7875f9e63c0f43c8eab4b22346dd21a76934",
+        "Node name for S&R": "SaveAudioAndText"
+      },
+      "widgets_values": [
+        "",
+        "F5TTSTH",
+        "wav"
+      ]
+    },
+    {
+      "id": 4,
+      "type": "LoadAudio",
+      "pos": [
+        -132.44277954101562,
+        271.6212463378906
+      ],
+      "size": [
+        315,
+        136
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "AUDIO",
+          "type": "AUDIO",
+          "links": [
+            2,
+            40
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.29",
+        "Node name for S&R": "LoadAudio"
+      },
+      "widgets_values": [
+        "mono_24000.wav",
+        null,
+        null
+      ]
+    },
+    {
+      "id": 2,
+      "type": "Apply Whisper",
+      "pos": [
+        217.60504150390625,
+        307.0470275878906
+      ],
+      "size": [
+        315,
+        98
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "links": [
+            1,
+            41
+          ]
+        },
+        {
+          "name": "segments_alignment",
+          "type": "whisper_alignment",
+          "links": null
+        },
+        {
+          "name": "words_alignment",
+          "type": "whisper_alignment",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-Whisper",
+        "ver": "edd1a485acf5e1e14835fdf8c4af982c0eaf115f",
+        "Node name for S&R": "Apply Whisper"
+      },
+      "widgets_values": [
+        "medium"
+      ]
+    },
+    {
+      "id": 10,
+      "type": "VrchAudioSaverNode",
+      "pos": [
+        1463.5211181640625,
+        455.6145935058594
+      ],
+      "size": [
+        539.0086669921875,
+        184
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 13
+        },
+        {
+          "name": "filename",
+          "type": "STRING",
+          "widget": {
+            "name": "filename"
+          },
+          "link": 37
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfyui-web-viewer",
+        "ver": "1.0.30",
+        "Node name for S&R": "VrchAudioSaverNode"
+      },
+      "widgets_values": [
+        "Thai-advance",
+        "web_viewer",
+        "wav",
+        true
+      ]
+    },
+    {
+      "id": 29,
+      "type": "F5TTS_Advance",
+      "pos": [
+        589.8016967773438,
+        488.6220703125
+      ],
+      "size": [
+        400,
+        372
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "sample_audio",
+          "type": "AUDIO",
+          "link": 40
+        },
+        {
+          "name": "remove_silence",
+          "shape": 7,
+          "type": "BOOL",
+          "link": null
+        },
+        {
+          "name": "sample_text",
+          "type": "STRING",
+          "widget": {
+            "name": "sample_text"
+          },
+          "link": 41
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            42
+          ]
+        },
+        {
+          "name": "text",
+          "type": "STRING",
+          "links": [
+            43
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "gordon123/ComfyUI-F5-TTS-TH",
+        "ver": "0ff62ea5f46c2a5dfce883192ffb4cec0c88d280",
+        "Node name for S&R": "F5TTS_Advance"
+      },
+      "widgets_values": [
+        "Text of sample_audio",
+        "ครับกดปิดไป แล้วก็มาที่ custom Manager มา model manager",
+        "model_500000.pt",
+        590,
+        "randomize",
+        1,
+        0.15,
+        32,
+        2,
+        -1,
+        0,
+        250
+      ]
+    }
+  ],
+  "links": [
+    [
+      1,
+      2,
+      0,
+      3,
+      0,
+      "*"
+    ],
+    [
+      2,
+      4,
+      0,
+      2,
+      0,
+      "AUDIO"
+    ],
+    [
+      13,
+      11,
+      0,
+      10,
+      0,
+      "AUDIO"
+    ],
+    [
+      37,
+      11,
+      1,
+      10,
+      1,
+      "STRING"
+    ],
+    [
+      40,
+      4,
+      0,
+      29,
+      0,
+      "AUDIO"
+    ],
+    [
+      41,
+      2,
+      0,
+      29,
+      2,
+      "STRING"
+    ],
+    [
+      42,
+      29,
+      0,
+      11,
+      0,
+      "AUDIO"
+    ],
+    [
+      43,
+      29,
+      1,
+      11,
+      1,
+      "STRING"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.6209213230591556,
+      "offset": [
+        206.1524447688117,
+        -225.50031789950347
+      ]
+    },
+    "frontendVersion": "1.17.11"
+  },
+  "version": 0.4
+}
