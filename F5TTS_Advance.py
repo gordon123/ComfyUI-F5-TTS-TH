@@ -26,6 +26,8 @@ from f5_tts.infer.utils_infer import (
 # Import Thai text cleaning
 from f5_tts.cleantext.number_tha import replace_numbers_with_thai
 from f5_tts.cleantext.th_repeat import process_thai_repeat
+# Import English transliteration
+from f5_tts.cleantext.ARPABET2ThaiScript import eng_to_thai_translit
 sys.path.pop(0)
 
 class F5TTS_Advance:
@@ -80,8 +82,12 @@ class F5TTS_Advance:
         fix_duration=0.0,
         max_chars=250,
     ):
-        # Clean input text
-        cleaned_text = process_thai_repeat(replace_numbers_with_thai(text))
+        # 1. Transliterate English to Thai script
+        text_translit = eng_to_thai_translit(text)
+        print(f"[DEBUG] after transliteration: {text_translit}")
+
+        # 2. Clean input text: numbers and repeats
+        cleaned_text = process_thai_repeat(replace_numbers_with_thai(text_translit))
         print(f"[DEBUG] cleaned_text: {cleaned_text}")
 
         # Prepare reference audio
@@ -93,6 +99,7 @@ class F5TTS_Advance:
             waveform = waveform.unsqueeze(0)
         sr = sample_audio["sample_rate"]
         print(f"[DEBUG] ref sample_rate: {sr}")
+
         # save reference for debugging
         ref_tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
         sf.write(ref_tmp.name, waveform.cpu().numpy().T, sr)

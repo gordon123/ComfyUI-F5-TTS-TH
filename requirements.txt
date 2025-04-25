@@ -38,6 +38,7 @@ tqdm
 numpy
 matplotlib
 soundfile
+g2p_en
 
 # Optional: for saving audio, web interface, CLI tools, and extended training
 gradio
