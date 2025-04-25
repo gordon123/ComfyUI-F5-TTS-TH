@@ -12,11 +12,15 @@ import urllib.request
 # Ensure the submodule is initialized
 Install.check_install()
 
-# Insert path to submodule for f5_tts package
+# ----- Import English-to-Thai transliteration (local file) -----
+# Place ARPABET2ThaiScript.py alongside this F5TTS_Advance.py
+from .ARPABET2ThaiScript import eng_to_thai_translit
+
+# ----- Add F5-TTS source path for imports -----
 f5tts_src = os.path.join(Install.base_path, "src")
 sys.path.insert(0, f5tts_src)
 
-# Import main inference tools
+# Main inference imports
 from f5_tts.model import DiT
 from f5_tts.infer.utils_infer import (
     load_model,
@@ -25,15 +29,11 @@ from f5_tts.infer.utils_infer import (
     infer_process,
     remove_silence_for_generated_wav,
 )
-# Import Thai text cleaning
 from f5_tts.cleantext.number_tha import replace_numbers_with_thai
 from f5_tts.cleantext.th_repeat import process_thai_repeat
 
-# Pop back the inserted path
+# Clean up path
 sys.path.pop(0)
-
-# Import English-to-Thai transliteration from local file
-from .ARPABET2ThaiScript import eng_to_thai_translit
 
 class F5TTS_Advance:
     @classmethod
@@ -87,15 +87,15 @@ class F5TTS_Advance:
         fix_duration=0.0,
         max_chars=250,
     ):
-        # 1. Transliterate English segments into Thai script
+        # 1. Transliterate English segments into Thai
         translit = eng_to_thai_translit(text)
         print(f"[DEBUG] transliterated: {translit}")
 
-        # 2. Clean numbers and repeats
+        # 2. Clean numbers and Thai repeats
         cleaned = process_thai_repeat(replace_numbers_with_thai(translit))
         print(f"[DEBUG] cleaned_text: {cleaned}")
 
-        # 3. Prepare reference audio file
+        # 3. Prepare reference audio
         wav = sample_audio["waveform"].float().contiguous()
         if wav.ndim == 3:
             wav = wav.squeeze()
@@ -119,7 +119,7 @@ class F5TTS_Advance:
         else:
             raise FileNotFoundError("Config file not found")
 
-        # 5. Ensure model & vocab on disk
+        # 5. Ensure model & vocab
         mdir = os.path.join(Install.base_path, "model"); os.makedirs(mdir, exist_ok=True)
         mp = os.path.join(mdir, model_name)
         vdir = os.path.join(Install.base_path, "vocab"); os.makedirs(vdir, exist_ok=True)
@@ -142,7 +142,7 @@ class F5TTS_Advance:
         if seed >= 0:
             torch.manual_seed(seed)
 
-        # 7. Prepare fix_duration arg
+        # 7. fix_duration arg
         fd = None if fix_duration == 0.0 else fix_duration
 
         # 8. Generate audio
@@ -161,7 +161,7 @@ class F5TTS_Advance:
         )
         print(f"[DEBUG] generated np: shape={audio_np.shape}, min={audio_np.min()}, max={audio_np.max()}")
 
-        # 9. Convert to tensor
+        # 9. To tensor
         audio_tensor = torch.from_numpy(audio_np)
         if audio_tensor.ndim == 1:
             audio_tensor = audio_tensor.unsqueeze(0)
