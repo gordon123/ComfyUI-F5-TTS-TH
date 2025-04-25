@@ -12,9 +12,14 @@ import urllib.request
 # Ensure the submodule is initialized
 Install.check_install()
 
-# Add submodule source to Python path for inference
+# Add main submodule source to Python path for inference
 f5tts_src = os.path.join(Install.base_path, "src")
 sys.path.insert(0, f5tts_src)
+
+# Add Pod submodule source for ARPABET2ThaiScript
+pod_src = os.path.join(Install.base_path, "submodules", "F5TTS-on-Pod", "src")
+sys.path.insert(0, pod_src)
+
 from f5_tts.model import DiT
 from f5_tts.infer.utils_infer import (
     load_model,
@@ -28,10 +33,10 @@ from f5_tts.cleantext.number_tha import replace_numbers_with_thai
 from f5_tts.cleantext.th_repeat import process_thai_repeat
 # Import English transliteration
 from f5_tts.cleantext.ARPABET2ThaiScript import eng_to_thai_translit
-from f5_tts.cleantext.number_tha import replace_numbers_with_thai
-from f5_tts.cleantext.th_repeat import process_thai_repeat
-from f5_tts.cleantext.ARPABET2ThaiScript import eng_to_thai_translit  # เพิ่ม import ของ transliteration
-sys.path.pop(0)
+
+# Cleanup Python path
+sys.path.pop(0)  # remove pod_src
+sys.path.pop(0)  # remove f5tts_src
 
 class F5TTS_Advance:
     @classmethod
@@ -95,14 +100,11 @@ class F5TTS_Advance:
 
         # Prepare reference audio
         waveform = sample_audio["waveform"].float().contiguous()
-        print(f"[DEBUG] ref raw waveform shape: {waveform.shape}")
         if waveform.ndim == 3:
             waveform = waveform.squeeze()
         elif waveform.ndim == 1:
             waveform = waveform.unsqueeze(0)
         sr = sample_audio["sample_rate"]
-        print(f"[DEBUG] ref sample_rate: {sr}")
-
         # save reference for debugging
         ref_tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
         sf.write(ref_tmp.name, waveform.cpu().numpy().T, sr)
@@ -115,8 +117,10 @@ class F5TTS_Advance:
         # Load model config
         cfg_folder = os.path.join(Install.base_path, "src", "f5_tts", "configs")
         cfg_candidates = ["F5TTS_Base.yaml", "F5TTS_Base_train.yaml"]
-        cfg_path = next((os.path.join(cfg_folder, c) for c in cfg_candidates
-                         if os.path.exists(os.path.join(cfg_folder, c))), None)
+        cfg_path = next(
+            (os.path.join(cfg_folder, c) for c in cfg_candidates if os.path.exists(os.path.join(cfg_folder, c))),
+            None
+        )
         if not cfg_path:
             raise FileNotFoundError("Config file not found in configs")
         model_cfg = OmegaConf.load(cfg_path).model.arch
@@ -130,13 +134,11 @@ class F5TTS_Advance:
         os.makedirs(vocab_dir, exist_ok=True)
         vocab_path = os.path.join(vocab_dir, "vocab.txt")
         if not os.path.exists(model_path):
-            print(f"[DEBUG] Downloading model: {model_name}")
             urllib.request.urlretrieve(
                 f"https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/model/{model_name}",
                 model_path
             )
         if not os.path.exists(vocab_path):
-            print("[DEBUG] Downloading vocab.txt")
             urllib.request.urlretrieve(
                 "https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/vocab.txt",
                 vocab_path
