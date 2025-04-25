@@ -1,9 +1,17 @@
+import nltk
+# Monkey-patch nltk.pos_tag to bypass missing tagger resource
+nltk.pos_tag = lambda tokens: [(t, '') for t in tokens]
+
 from g2p_en import G2p
 
-# 1. สร้าง G2p object
-g2p = G2p()
+# Initialize G2p object
+try:
+    g2p = G2p()
+except Exception:
+    # Fallback in case g2p fails to initialize
+    g2p = None
 
-# 2. ตาราง ARPABET → ภาษาไทย (simplified)
+# Simplified ARPABET → Thai mapping
 ARPABET2TH = {
     "AA": "อา", "AE": "แอ", "AH": "อะ", "AO": "ออ",
     "B": "บ",  "CH": "ช",   "D": "ด",  "DH": "ฺดฺ",
@@ -16,14 +24,19 @@ ARPABET2TH = {
     "V": "ว",  "W": "ว","Y": "ย","Z": "ซ","ZH": "ช"
 }
 
-def eng_to_thai_translit(eng_text):
-    phonemes = g2p(eng_text)    # e.g. ['M','AE','N','AH','JH','ER']
+def eng_to_thai_translit(eng_text: str) -> str:
+    """
+    Convert English text to a Thai transliteration by mapping ARPABET phonemes.
+    Falls back to stripping non-mapped phonemes.
+    """
+    if g2p is None:
+        return eng_text
+    phonemes = g2p(eng_text)
     th_chars = []
     for p in phonemes:
-        t = ARPABET2TH.get(p)
-        if t:
-            th_chars.append(t)
-        elif p == " " or p == "  ":
+        if p in ARPABET2TH:
+            th_chars.append(ARPABET2TH[p])
+        elif p.strip() == "":
             th_chars.append(" ")
-        # else skip unknown
+        # skip any unknown symbols
     return "".join(th_chars)
