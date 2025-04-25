@@ -14,9 +14,9 @@ except Exception:
 
 # 3) Exception table: force these words to exactly this Thai
 EXCEPTIONS = {
-    "custom":  "คัสตอม",
-    "manager": "เมเนเจอร์",
-    "model":   "โมเดล",
+    "custom":  "คัส'เทิม",
+    "manager": "แมน'นิจเจอะ",
+    "model":   "โม'เดิล",
     # add more as you like...
 }
 
