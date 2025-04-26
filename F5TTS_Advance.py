@@ -120,9 +120,11 @@ class F5TTS_Advance:
             raise FileNotFoundError("Config file not found")
 
         # 5. Ensure model & vocab
-        mdir = os.path.join(Install.base_path, "model"); os.makedirs(mdir, exist_ok=True)
+        mdir = os.path.join(Install.base_path, "model")
+        os.makedirs(mdir, exist_ok=True)
         mp = os.path.join(mdir, model_name)
-        vdir = os.path.join(Install.base_path, "vocab"); os.makedirs(vdir, exist_ok=True)
+        vdir = os.path.join(Install.base_path, "vocab")
+        os.makedirs(vdir, exist_ok=True)
         vp = os.path.join(vdir, "vocab.txt")
         if not os.path.exists(mp):
             urllib.request.urlretrieve(
