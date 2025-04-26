@@ -1,5 +1,5 @@
 [project]
-name = "f5-tts-th"
+name = "ComfyUI-F5-TTS-TH"
 description = "From F5-TTS for Thai language only เอาไว้สังเคราะห์เสียงภาษาไทย ตัวอย่างการใช้ https://youtu.be/QUNL8DbPdmo"
 version = "1.0.0"
 license = {file = "LICENSE"}
@@ -12,4 +12,4 @@ Repository = "https://github.com/gordon123/ComfyUI-F5-TTS-TH"
 [tool.comfy]
 PublisherId = "iimate24"
 DisplayName = "ComfyUI-F5-TTS-TH"
-Icon = "icon_F5_TTS_TH.ico"
+Icon = "icon_F5_TTS_TH.png"
