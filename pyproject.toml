@@ -1,6 +1,6 @@
 [project]
 name = "f5-tts-th"
-description = ""
+description = "From F5-TTS for Thai language only เอาไว้สังเคราะห์เสียงภาษาไทย ตัวอย่างการใช้ https://youtu.be/QUNL8DbPdmo"
 version = "1.0.0"
 license = {file = "LICENSE"}
 dependencies = ["# Core PyTorch + Audio backend", "# ✅ PyTorch with CUDA 12.6 เหมาะกับ GPU ใหม่ๆ และ NVIDIA RTX 40 series และ 30 series และ comfyui", "#torch==2.1.2+cu126", "#torchaudio==2.1.2+cu126", "#--extra-index-url https://download.pytorch.org/whl/cu126", "# ✅ PyTorch with CUDA 11.8 for older GPUs, if needed", "# torch==2.1.2+cu118", "# torchaudio==2.1.2+cu118", "# --extra-index-url https://download.pytorch.org/whl/cu118", "# ✅ PyTorch with CPU only", "# torch==2.1.2", "# torchaudio==2.1.2", "# ✅ PyTorch with MPS (Apple Silicon)", "# torch==2.1.2", "# torchaudio==2.1.2", "# ✅ PyTorch with ROCm (AMD GPUs)", "# Thai NLP", "pythainlp", "deepcut", "# Model config / HuggingFace asset loading", "omegaconf", "cached_path", "# Git submodule handling (Install.py)", "pygit2", "# Vocoder", "vocos", "# Utils & Visualization", "tqdm", "numpy", "matplotlib", "soundfile", "g2p_en", "# Optional: for saving audio, web interface, CLI tools, and extended training", "gradio", "click", "datasets", "jieba", "librosa", "pydub", "pypinyin", "wandb", "safetensors", "tomli", "# Transformer & Trainer", "transformers", "ema_pytorch>=0.5.2", "torchdiffeq", "x_transformers>=1.31.14", "bitsandbytes>0.37.0", "torch-time-stretch", "accelerate>=0.33.0"]
