@@ -17,7 +17,7 @@ class FairyTaleNarratorSwitcher:
         • sample_audio_narator: AUDIO — reference audio for narrator voice
         • sample_text_narator : STRING — textual prompt for narrator reference
         • Optional char_i pairs:
-            - char_name_i      : STRING — tag name matching script (e.g. มะลิ)
+            - char_name_i      : STRING — tag name matching script (e.g. มะลิ หรือ [มะลิ])
             - sample_audio_i   : AUDIO — reference for TTS style
             - sample_text_i    : STRING — textual prompt for reference audio
         • TTS numeric/bool params only:
@@ -36,7 +36,6 @@ class FairyTaleNarratorSwitcher:
             "sample_text_narator":   ("STRING", {"default": ""}),
         }
         optional = {}
-
         # character references up to 5
         for i in range(1, 6):
             optional[f"char_name_{i}"]   = ("STRING", {"default": f"Character{i}"})
@@ -77,11 +76,13 @@ class FairyTaleNarratorSwitcher:
         # build voice reference map: speaker -> (audio, text)
         refs = {"narator": (sample_audio_narator, sample_text_narator)}
         for i in range(1, 6):
-            name = kwargs.get(f"char_name_{i}")
-            audio = kwargs.get(f"sample_audio_{i}")
-            txt   = kwargs.get(f"sample_text_{i}")
-            if name and audio is not None:
-                refs[name] = (audio, txt or "")
+            raw = kwargs.get(f"char_name_{i}")
+            aud = kwargs.get(f"sample_audio_{i}")
+            txt = kwargs.get(f"sample_text_{i}")
+            if raw and aud is not None:
+                # รองรับชื่อมีหรือไม่มี [] และตัดเว้นวรรค
+                name = raw.strip().strip("[]").strip()
+                refs[name] = (aud, txt or "")
 
         # parse script into segments
         pattern = re.compile(r'^\[([^\]]+)\]\s*“(.+)”')
@@ -96,7 +97,7 @@ class FairyTaleNarratorSwitcher:
                 if spk in refs:
                     segments.append((spk, utt))
                 else:
-                    # unrecognized tag: fallback narrator, strip tag
+                    # ไม่รู้จัก tag → fallback narator, ตัด tag ด้วย strip_tags
                     segments.append(("narator", strip_tags(line)))
             else:
                 segments.append(("narator", line))
@@ -117,13 +118,15 @@ class FairyTaleNarratorSwitcher:
         out_segments = []
 
         for spk, utt in segments:
-            ref_audio, ref_txt = refs.get(spk, refs["narator"])
+            ref_aud, ref_txt = refs.get(spk, refs["narator"])
             audio_dict, _ = tts.synthesize(
-                ref_audio, ref_txt, utt, **f5_params
+                ref_aud, ref_txt, utt, **f5_params
             )
             wav = audio_dict["waveform"]
             sr  = audio_dict["sample_rate"]
-            sample_rate = sample_rate or sr
+            if sample_rate is None:
+                sample_rate = sr
+            # แน่ใจว่า shape ถูกต้อง
             if wav.dim() == 1:
                 wav = wav.unsqueeze(0)
             audio_tensors.append(wav)
