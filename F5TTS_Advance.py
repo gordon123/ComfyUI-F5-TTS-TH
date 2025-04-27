@@ -89,11 +89,11 @@ class F5TTS_Advance:
     ):
         # 1. Transliterate English segments into Thai
         translit = eng_to_thai_translit(text)
-        print(f"[DEBUG] transliterated: {translit}")
+      #  print(f"[DEBUG] transliterated: {translit}")
 
         # 2. Clean numbers and Thai repeats
         cleaned = process_thai_repeat(replace_numbers_with_thai(translit))
-        print(f"[DEBUG] cleaned_text: {cleaned}")
+      #  print(f"[DEBUG] cleaned_text: {cleaned}")
 
         # 3. Prepare reference audio
         wav = sample_audio["waveform"].float().contiguous()
@@ -107,7 +107,7 @@ class F5TTS_Advance:
             ref_path = tmpf.name
         ref_audio, ref_text = preprocess_ref_audio_text(ref_path, sample_text)
         os.unlink(ref_path)
-        print(f"[DEBUG] ref_text: {ref_text}")
+      #  print(f"[DEBUG] ref_text: {ref_text}")
 
         # 4. Load model config
         cfg_dir = os.path.join(Install.base_path, "src", "f5_tts", "configs")
@@ -161,7 +161,7 @@ class F5TTS_Advance:
             mel_spec_type="vocos",
             device=device
         )
-        print(f"[DEBUG] generated np: shape={audio_np.shape}, min={audio_np.min()}, max={audio_np.max()}")
+     #   print(f"[DEBUG] generated np: shape={audio_np.shape}, min={audio_np.min()}, max={audio_np.max()}")
 
         # 9. To tensor
         audio_tensor = torch.from_numpy(audio_np)
