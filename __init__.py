@@ -17,5 +17,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "F5TTS_Advance":             "🎤 F5-TTS-Advance TH 🇹🇭",
     # "F5TTSAudioInputs":        "🎤 F5-TTS-TH simple 🇹🇭",
     "SaveAudioAndText":          "💾 Save Audio & Text TH 🇹🇭",
-    "FairyTaleNarratorSwitcher": "🧚 Narrator Switcher (Do not use Testing) ",
+    "FairyTaleNarratorSwitcher": "🧚 Narrator Switcher (Beta test) ",
 }

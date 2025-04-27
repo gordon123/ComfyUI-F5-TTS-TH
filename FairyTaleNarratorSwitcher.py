@@ -59,7 +59,7 @@ class FairyTaleNarratorSwitcher:
     RETURN_TYPES = ("AUDIO", "STRING")
     RETURN_NAMES = ("audio", "text")
     FUNCTION = "run"
-    CATEGORY = "🧚 FairyTale Tools"
+    CATEGORY = "🇹🇭 Thai TTS / 🧚 Narator switcher"
 
     def run(
         self,
