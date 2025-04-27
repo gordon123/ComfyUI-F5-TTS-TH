@@ -70,6 +70,10 @@ class FairyTaleNarratorSwitcher:
         *args,
         **kwargs
     ):
+        # helper to strip tags from fallback lines
+        def strip_tags(line):
+            return re.sub(r'^\[[^\]]+\]\s*', '', line)
+
         # build voice reference map: speaker -> (audio, text)
         refs = {"narator": (sample_audio_narator, sample_text_narator)}
         for i in range(1, 6):
@@ -89,7 +93,11 @@ class FairyTaleNarratorSwitcher:
             m = pattern.match(line)
             if m:
                 spk, utt = m.groups()
-                segments.append((spk, utt) if spk in refs else ("narator", line))
+                if spk in refs:
+                    segments.append((spk, utt))
+                else:
+                    # unrecognized tag: fallback narrator, strip tag
+                    segments.append(("narator", strip_tags(line)))
             else:
                 segments.append(("narator", line))
 
