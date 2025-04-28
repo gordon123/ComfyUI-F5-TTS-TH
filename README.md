@@ -75,6 +75,8 @@ pip install --upgrade pip
 ```
 
 ### 5. ติดตั้ง dependencies 
+Portable version Comfyui เรียก จาก pyton ใน folder embeded นะครับ ในการใช้ pip
+#FILE PATH#_embeded/python.exe -m pip install -r requirements.txt
 ```
 pip install -r requirements.txt
 ```
@@ -91,6 +93,8 @@ pip install torch  torchaudio  --extra-index-url https://download.pytorch.org/wh
 ```
 ---
 ### 6. ติดตั้ง ffmpeg
+ใครใช้ windows, ไปหาโหลดสำหรับ windows นะครัย
+คำสั่งนี้สำหรับ linux
 ```
 apt update && apt install -y ffmpeg
 ```
