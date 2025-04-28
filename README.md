@@ -76,7 +76,10 @@ pip install --upgrade pip
 
 ### 5. ติดตั้ง dependencies 
 Portable version Comfyui เรียก จาก python ใน folder embeded นะครับ ในการใช้ pip <br>
-#FILE PATH#_embeded/python.exe -m pip install -r requirements.txt <br>
+```
+#FILE PATH#_embeded/python.exe -m pip install -r requirements.txt
+```
+อันนี้สำหรับคนลง CpmfyUI แบบ native version
 ```
 pip install -r requirements.txt
 ```
