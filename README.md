@@ -2,13 +2,18 @@
 **Custom Node สำหรับแปลงข้อความเป็นเสียงภาษาไทย บน ComfyUI**  
 
 ---
+### Update
+### Muti-Speaker - (27 April -2025)
+<img width="720" alt="Screenshot 2025-04-27 at 21 32 08" src="https://github.com/user-attachments/assets/6f64208c-f393-4082-adb6-e983ea34affe" /> <br>
+ใช้ [ชื่อตัวละคน] กำหนด tag ใช้ตัวละครใน prompt และ ใน speaker model <br>
 
-🚧 **Underconstruction — SIÒON!** 🚧  
+# 🚧 **Underconstruction — IN PROGRESS!** 🚧  
 _เสียงไทยที่เท่จนต้องเบิ้ลหูฟัง_  <br>
 ทดสอบผ่าน การ์ดrtx 30xxx, 40xx <br>
 rtx 50xx nightly version ยังไม่ทดสอบ<br>
 การ์ด v100, A100 ของ runpod รันไม่ได้ <br>
-
+<br>
+## แนะนำให้ลงแยกกับ comfyui หลัก เพราะหลาย ๆ แพคเกจใช้เวอชั่นเก่า
 <br>  
 
 ## 🎤 เกี่ยวกับโปรเจกต์นี้
@@ -70,45 +75,29 @@ pip install --upgrade pip
 ```
 
 ### 5. ติดตั้ง dependencies 
+Portable version Comfyui เรียก จาก python ใน folder embeded นะครับ ในการใช้ pip <br>
+```
+#FILE PATH#_embeded/python.exe -m pip install -r requirements.txt
+```
+อันนี้สำหรับคนลง CpmfyUI แบบ native version
 ```
 pip install -r requirements.txt
 ```
-
 ## Core PyTorch + Audio backend เลือก ให้ตรงกับ Pod ที่ตัวเองใช้ ตัวไดตัวหนึ่ง
 
 ### 🔥 CUDA 12.6 (RTX 30/40 ซีรีส์ และ ComfyUI บน CUDA 12.6)
 ```
 pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu126
-ผมทดลองอันนี้ จาก ComfyUI ใช้ได้แล้ว
-
-ถ้าใครมีปัญหาเรื่องเวอชั่น pytorch, torch, torchvision, torchaudio ทดลองตามนี้
-pip install torch==2.1.2+cu126  torchvision==0.15.2+cu126  torchaudio==2.1.2+cu126 --extra-index-url https://download.pytorch.org/whl/cu126
 ```
 
 ### 🛠️ CUDA 11.8 (GPU รุ่นเก่า หรือถ้าคุณใช้ cu118)
 ```
 pip install torch  torchaudio  --extra-index-url https://download.pytorch.org/whl/cu118
-or
-pip install torch==2.3.0+cu118 torchaudio==2.3.0+cu118 --extra-index-url https://download.pytorch.org/whl/cu118
-```
-
-### 🖥️ CPU only (ไม่มี CUDA)
-```
-pip install torch==2.1.2 torchvision==0.15.2 torchaudio==2.1.2
-```
-
-### 🍏 Mac (Apple Silicon)
-```
-pip install  torch==2.1.2  torchvision==0.15.2  torchaudio==2.1.2
-```
-
-### 🐉 ROCm (AMD GPUs, สมมติ ROCm 6.4)
-```
-pip install  torch==2.1.2+rocm6.4  torchvision==0.15.2+rocm6.4 torchaudio==2.1.2+rocm6.4 --extra-index-url https://download.pytorch.org/whl/rocm6.4
 ```
 ---
-
 ### 6. ติดตั้ง ffmpeg
+ใครใช้ windows, ไปหาโหลดสำหรับ windows นะครัย
+คำสั่งนี้สำหรับ linux
 ```
 apt update && apt install -y ffmpeg
 ```
@@ -122,9 +111,7 @@ apt update && apt install -y ffmpeg
 Upload audio เสียงของเรา 
 https://huggingface.co/spaces/hf-audio/whisper-large-v3
 แล้วกด transcribe เพื่อ copy ข้อความมาใช้
-
 ---
-
 # F5TTS-Advance Parameters Guide
 
 มาเจาะลึกทีละพารามิเตอร์กันดีกว่าว่าแต่ละตัวมัน “เวิร์ก” ยังไง แล้วถ้าเราเลื่อนค่าไปมาก–น้อย จะได้ผลลัพธ์แบบไหน 🌱
