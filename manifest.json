@@ -1,0 +1,10 @@
+{
+  "name": "F5-TTS-TH",
+  "version": "1.0.0",
+  "description": "ComfyUI node for Thai text-to-speech using F5-TTS.",
+  "author": "Your Name",
+  "url": "https://github.com/yourusername/ComfyUI-F5-TTS-TH",
+  "comfyui": "*",
+  "categories": ["audio", "tts", "thai"],
+  "dependencies": []
+}
