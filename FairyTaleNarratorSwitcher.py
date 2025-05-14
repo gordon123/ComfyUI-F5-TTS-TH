@@ -1,11 +1,6 @@
 import re
 import json
-torch_imported = False
-try:
-    import torch
-    torch_imported = True
-except ImportError:
-    pass
+import torch
 
 from .F5TTS_Advance import F5TTS_Advance
 
@@ -26,17 +21,17 @@ class FairyTaleNarratorSwitcher:
 
     @classmethod
     def INPUT_TYPES(cls):
-        # mirror F5TTS_Advance model choices
+        # mirror F5TTS_Advance latest models in repo root
         model_choices = [
-            "model_100000.pt", "model_130000.pt", "model_150000.pt",
-            "model_200000.pt", "model_250000.pt", "model_350000.pt",
-            "model_430000.pt", "model_475000.pt", "model_500000.pt"
+            "model_250000.pt", "model_250000_FP16.pt",
+            "model_475000.pt", "model_475000_FP16.pt",
+            "model_500000.pt", "model_500000_FP16.pt",
+            "model_600000.pt", "model_600000_FP16.pt"
         ]
         required = {
             "text": ("STRING", {"multiline": True, "default": ""}),
             "sample_audio_narator": ("AUDIO",),
             "sample_text_narator": ("STRING", {"default": ""}),
-            # TTS model selection
             "model_name": (model_choices, {"default": "model_500000.pt"}),
             "seed": ("INT", {"default": -1, "min": -1}),
         }
@@ -106,9 +101,7 @@ class FairyTaleNarratorSwitcher:
             "nfe_step", "cfg_strength", "sway_sampling_coef",
             "fix_duration", "max_chars"
         ] if k in kwargs}
-        # include model & seed
-        f5_params["model_name"] = model_name
-        f5_params["seed"] = seed
+        f5_params.update({"model_name": model_name, "seed": seed})
 
         # synthesize each segment
         tts = F5TTS_Advance()
