@@ -19,28 +19,26 @@
 
 # ✅ PyTorch with ROCm (AMD GPUs)           
 
-# Thai NLP
+## Thai NLP
 pythainlp
 deepcut
 
-# Model config / HuggingFace asset loading
+## HuggingFace & Config
 omegaconf
-cached_path
+huggingface_hub[hf_xet]
+hf_xet
 
-# Git submodule handling (Install.py)
-pygit2
-
-# Vocoder
+## Vocoder
 vocos
 
-# Utils & Visualization
+## Utils & Viz
 tqdm
 numpy
 matplotlib
 soundfile
 g2p_en
 
-# Optional: for saving audio, web interface, CLI tools, and extended training
+## Optional
 gradio
 click
 datasets
@@ -52,7 +50,7 @@ wandb
 safetensors
 tomli
 
-# Transformer & Trainer
+## Transformers & Trainer
 transformers
 ema_pytorch>=0.5.2
 torchdiffeq
@@ -60,4 +58,4 @@ x_transformers>=1.31.14
 bitsandbytes>0.37.0
 torch-time-stretch
 accelerate>=0.33.0
-
+protobuf==3.19.6
