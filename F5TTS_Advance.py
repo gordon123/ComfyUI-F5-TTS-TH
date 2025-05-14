@@ -38,13 +38,12 @@ sys.path.pop(0)
 class F5TTS_Advance:
     @classmethod
     def INPUT_TYPES(cls):
+        # Latest models in root of repo
         model_choices = [
-            "model_50000.pt", "model_80000.pt",
-            "model_100000.pt", "model_130000.pt", "model_150000.pt", "model_200000.pt",
             "model_250000.pt", "model_250000_FP16.pt",
-            "model_350000.pt", "model_430000.pt",
             "model_475000.pt", "model_475000_FP16.pt",
-            "model_500000.pt", "model_500000_FP16.pt"
+            "model_500000.pt", "model_500000_FP16.pt",
+            "model_600000.pt", "model_600000_FP16.pt"
         ]
         return {
             "required": {
@@ -89,13 +88,11 @@ class F5TTS_Advance:
     ):
         # 1. Transliterate English segments into Thai
         translit = eng_to_thai_translit(text)
-      #  print(f"[DEBUG] transliterated: {translit}")
 
         # 2. Clean numbers and Thai repeats
         cleaned = process_thai_repeat(replace_numbers_with_thai(translit))
-      #  print(f"[DEBUG] cleaned_text: {cleaned}")
 
-        # 3. Prepare reference audio
+        # 3. Prepare reference audio file
         wav = sample_audio["waveform"].float().contiguous()
         if wav.ndim == 3:
             wav = wav.squeeze()
@@ -107,7 +104,6 @@ class F5TTS_Advance:
             ref_path = tmpf.name
         ref_audio, ref_text = preprocess_ref_audio_text(ref_path, sample_text)
         os.unlink(ref_path)
-      #  print(f"[DEBUG] ref_text: {ref_text}")
 
         # 4. Load model config
         cfg_dir = os.path.join(Install.base_path, "src", "f5_tts", "configs")
@@ -127,24 +123,23 @@ class F5TTS_Advance:
         os.makedirs(vdir, exist_ok=True)
         vp = os.path.join(vdir, "vocab.txt")
 
-        # 5.1. Model URL if missing
+        # 5.1. Download model if missing
         if not os.path.exists(mp):
             model_url = f"https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/{model_name}"
             try:
                 urllib.request.urlretrieve(model_url, mp)
             except urllib.error.HTTPError as e:
-                print(f"Error downloading model: {e}")
+                print(f"❌ Error downloading model: {e}")
                 raise RuntimeError(f"❌ Failed to download model from {model_url}: {e}")
-        # 5.2. Vocab URL if missing (should be same for all models)
+
+        # 5.2. Download vocab if missing
         if not os.path.exists(vp):
             vocab_url = "https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/vocab.txt"
             try:
                 urllib.request.urlretrieve(vocab_url, vp)
             except urllib.error.HTTPError as e:
-                print(f"Error downloading vocab: {e}")
-                raise RuntimeError(f"❌ Failed to download vocab from {vocab_url}: {e}")  
-            
-       
+                print(f"❌ Error downloading vocab: {e}")
+                raise RuntimeError(f"❌ Failed to download vocab from {vocab_url}: {e}")
 
         # 6. Load model + vocoder
         model = load_model(DiT, model_cfg, mp, vocab_file=vp, mel_spec_type="vocos")
@@ -172,7 +167,6 @@ class F5TTS_Advance:
             mel_spec_type="vocos",
             device=device
         )
-     #   print(f"[DEBUG] generated np: shape={audio_np.shape}, min={audio_np.min()}, max={audio_np.max()}")
 
         # 9. To tensor
         audio_tensor = torch.from_numpy(audio_np)
@@ -185,13 +179,11 @@ class F5TTS_Advance:
                 sf.write(tmp2.name, audio_tensor.cpu().numpy().T, sr_out)
                 remove_silence_for_generated_wav(tmp2.name)
                 audio_tensor, sr_out = torchaudio.load(tmp2.name)
-
                 try:
                     os.unlink(tmp2.name)
                 except PermissionError:
                     print(f"PermissionError: Unable to delete {tmp2.name}. Please delete it manually.")
                 except Exception as e:
                     print(f"Error deleting {tmp2.name}: {e}")
-     
 
         return {"waveform": audio_tensor, "sample_rate": sr_out}, cleaned
