@@ -126,14 +126,25 @@ class F5TTS_Advance:
         vdir = os.path.join(Install.base_path, "vocab")
         os.makedirs(vdir, exist_ok=True)
         vp = os.path.join(vdir, "vocab.txt")
+
+        # 5.1. Model URL if missing
         if not os.path.exists(mp):
-            urllib.request.urlretrieve(
-                f"https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/model/{model_name}", mp
-            )
+            model_url = f"https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/{model_name}"
+            try:
+                urllib.request.urlretrieve(model_url, mp)
+            except urllib.error.HTTPError as e:
+                print(f"Error downloading model: {e}")
+                raise RuntimeError(f"❌ Failed to download model from {model_url}: {e}")
+        # 5.2. Vocab URL if missing (should be same for all models)
         if not os.path.exists(vp):
-            urllib.request.urlretrieve(
-                "https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/vocab.txt", vp
-            )
+            vocab_url = "https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main/vocab.txt"
+            try:
+                urllib.request.urlretrieve(vocab_url, vp)
+            except urllib.error.HTTPError as e:
+                print(f"Error downloading vocab: {e}")
+                raise RuntimeError(f"❌ Failed to download vocab from {vocab_url}: {e}")  
+            
+       
 
         # 6. Load model + vocoder
         model = load_model(DiT, model_cfg, mp, vocab_file=vp, mel_spec_type="vocos")
@@ -174,6 +185,13 @@ class F5TTS_Advance:
                 sf.write(tmp2.name, audio_tensor.cpu().numpy().T, sr_out)
                 remove_silence_for_generated_wav(tmp2.name)
                 audio_tensor, sr_out = torchaudio.load(tmp2.name)
-                os.unlink(tmp2.name)
+
+                try:
+                    os.unlink(tmp2.name)
+                except PermissionError:
+                    print(f"PermissionError: Unable to delete {tmp2.name}. Please delete it manually.")
+                except Exception as e:
+                    print(f"Error deleting {tmp2.name}: {e}")
+     
 
         return {"waveform": audio_tensor, "sample_rate": sr_out}, cleaned
