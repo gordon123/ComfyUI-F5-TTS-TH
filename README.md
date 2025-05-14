@@ -108,6 +108,10 @@ pip install torch  torchaudio  --extra-index-url https://download.pytorch.org/wh
 ```
 apt update && apt install -y ffmpeg
 ```
+สำหรับใครให้ดาวโหลด จาก hugginface เร็วขึ้นนิดหน่อย ให้ลง hf_xet
+```
+pip install hf_xet
+```
 ### 7. Custom Node ที่แนะนำให้ติดตั้งเพิ่มเติม
 
 | ชื่อ Node | ใช้ทำอะไร | ลิงก์ |
