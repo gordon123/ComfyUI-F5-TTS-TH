@@ -1,6 +1,12 @@
 import re
 import json
-import torch
+
+# Detect torch availability
+try:
+    import torch
+    torch_imported = True
+except ImportError:
+    torch_imported = False
 
 from .F5TTS_Advance import F5TTS_Advance
 
@@ -111,11 +117,16 @@ class FairyTaleNarratorSwitcher:
             audio_dict, _ = tts.synthesize(ref_aud, ref_txt, utt, **f5_params)
             wav, sr = audio_dict["waveform"], audio_dict["sample_rate"]
             sample_rate = sample_rate or sr
-            if wav.dim() == 1: wav = wav.unsqueeze(0)
+            if torch_imported and wav.dim() == 1:
+                wav = wav.unsqueeze(0)
             audio_tensors.append(wav)
             out_segments.append({"speaker": spk, "text": utt})
 
         # concat
-        full = torch.cat(audio_tensors, dim=1) if torch_imported else audio_tensors[0]
+        if torch_imported and len(audio_tensors) > 1:
+            full = torch.cat(audio_tensors, dim=1)
+        else:
+            full = audio_tensors[0]
+
         return ({"waveform": full, "sample_rate": sample_rate},
                 json.dumps(out_segments, ensure_ascii=False))
