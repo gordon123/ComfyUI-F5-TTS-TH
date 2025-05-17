@@ -12,6 +12,7 @@ librosa
 jieba
 pypinyin
 wandb
+datasets
 transformers
 ema_pytorch>=0.5.2
 torchdiffeq
