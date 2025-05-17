@@ -1,7 +1,6 @@
 pythainlp
 deepcut
 omegaconf
-huggingface_hub[hf_xet]
 hf_xet
 vocos
 tqdm
@@ -10,6 +9,8 @@ matplotlib
 soundfile
 g2p_en
 librosa
+jieba
+pypinyin
 transformers
 ema_pytorch>=0.5.2
 torchdiffeq
