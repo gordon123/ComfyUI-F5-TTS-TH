@@ -11,6 +11,7 @@ g2p_en
 librosa
 jieba
 pypinyin
+wandb
 transformers
 ema_pytorch>=0.5.2
 torchdiffeq
