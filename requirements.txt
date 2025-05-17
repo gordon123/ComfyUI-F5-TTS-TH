@@ -13,6 +13,7 @@ jieba
 pypinyin
 wandb
 datasets
+pydub
 transformers
 ema_pytorch>=0.5.2
 torchdiffeq
