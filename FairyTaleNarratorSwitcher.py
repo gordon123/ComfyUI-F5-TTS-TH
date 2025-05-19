@@ -1,33 +1,9 @@
-import re
-import json
-
-# Detect torch availability
-try:
-    import torch
-    torch_imported = True
-except ImportError:
-    torch_imported = False
-
+import re, json, torch
 from .F5TTS_Advance import F5TTS_Advance
 
 class FairyTaleNarratorSwitcher:
-    """
-    🧚 FairyTale Narrator Switcher for ComfyUI with integrated F5-TTS
-    - Inputs:
-        • text                : STRING (multiline) — fairy tale script
-        • sample_audio_narator: AUDIO — reference audio for narrator voice
-        • sample_text_narator : STRING — textual prompt for narrator reference
-        • model_name          : MODEL choice list
-        • seed                : INT (default -1)
-        • Optional char_i pairs and TTS params…
-    - Outputs:
-        • audio              : AUDIO — concatenated waveform
-        • text               : STRING — JSON list of segments {speaker, text}
-    """
-
     @classmethod
     def INPUT_TYPES(cls):
-        # mirror F5TTS_Advance latest models in repo root
         model_choices = [
             "model_250000.pt", "model_250000_FP16.pt",
             "model_475000.pt", "model_475000_FP16.pt",
@@ -35,19 +11,19 @@ class FairyTaleNarratorSwitcher:
             "model_600000.pt", "model_600000_FP16.pt"
         ]
         required = {
-            "text": ("STRING", {"multiline": True, "default": ""}),
+            "text": ("STRING", {"multiline": True}),
             "sample_audio_narator": ("AUDIO",),
             "sample_text_narator": ("STRING", {"default": ""}),
             "model_name": (model_choices, {"default": "model_500000.pt"}),
             "seed": ("INT", {"default": -1, "min": -1}),
         }
         optional = {}
-        # up to 5 character voices
-        for i in range(1, 6):
+        # 5 ตัวละครรอง
+        for i in range(1,6):
             optional[f"char_name_{i}"]   = ("STRING", {"default": f"Character{i}"})
             optional[f"sample_audio_{i}"] = ("AUDIO",)
             optional[f"sample_text_{i}"]  = ("STRING", {"default": ""})
-        # TTS numeric/bool params
+        # พารามิเตอร์ TTS
         optional.update({
             "remove_silence":      ("BOOL",  {"default": True}),
             "speed":               ("FLOAT", {"default": 1.0,  "min": 0.1, "max": 5.0,  "step": 0.1}),
@@ -65,68 +41,70 @@ class FairyTaleNarratorSwitcher:
     FUNCTION = "run"
     CATEGORY = "🇹🇭 Thai TTS"
 
-    def run(
-        self,
-        text,
-        sample_audio_narator,
-        sample_text_narator,
-        model_name="model_500000.pt",
-        seed=-1,
-        *args,
-        **kwargs
-    ):
-        # strip tags helper
-        def strip_tags(line): return re.sub(r'^\[[^\]]+\]\s*', '', line)
+    def run(self, text, sample_audio_narator, sample_text_narator,
+            model_name="model_500000.pt", seed=-1, *args, **kwargs):
 
-        # build speaker refs
+        # helper: ดึง [ชื่อ] และ ข้อความ หลัง ] ได้ทุกกรณี
+        def parse_line(line):
+            if line.startswith('['):
+                end = line.find(']')
+                if end != -1:
+                    spk = line[1:end]
+                    utt = line[end+1:].strip().strip('“”" ')
+                    return spk, utt
+            return None, line
+
+        # สร้าง map ของเสียงอ้างอิง
         refs = {"narator": (sample_audio_narator, sample_text_narator)}
-        for i in range(1, 6):
-            raw = kwargs.get(f"char_name_{i}")
-            aud = kwargs.get(f"sample_audio_{i}")
-            txt = kwargs.get(f"sample_text_{i}")
-            if raw and aud is not None:
-                name = raw.strip().strip("[]").strip()
-                refs[name] = (aud, txt or "")
+        for i in range(1,6):
+            name = kwargs.get(f"char_name_{i}", "").strip()
+            aud  = kwargs.get(f"sample_audio_{i}")
+            txt  = kwargs.get(f"sample_text_{i}", "")
+            if name and aud is not None:
+                refs[name] = (aud, txt)
 
-        # parse script
-        pattern = re.compile(r'^\[([^\]]+)\]\s*“(.+)”')
+        # แยกสคริปต์เป็นบรรทัดแล้วจับ segments
         segments = []
-        for line in text.splitlines():
-            line = line.strip()
+        for raw in text.splitlines():
+            line = raw.strip()
             if not line: continue
-            m = pattern.match(line)
-            if m:
-                spk, utt = m.groups()
-                segments.append((spk if spk in refs else "narator", utt))
+            spk, utt = parse_line(line)
+            if spk in refs:
+                segments.append((spk, utt))
             else:
-                segments.append(("narator", line))
+                # ถ้าไม่มี tag หรือ tag ไม่ตรงใน refs → narator
+                segments.append(("narator", utt if spk is None else utt))
 
-        # collect TTS params
+        # เก็บพารามิเตอร์ TTS
         f5_params = {k: kwargs[k] for k in [
             "remove_silence", "speed", "cross_fade_duration",
             "nfe_step", "cfg_strength", "sway_sampling_coef",
             "fix_duration", "max_chars"
         ] if k in kwargs}
-        f5_params.update({"model_name": model_name, "seed": seed})
+        # ต้องเติม model_name และ seed เข้าไปด้วย
+        f5_params["model_name"] = model_name
+        f5_params["seed"]       = seed
 
-        # synthesize each segment
+        # สังเคราะห์ทีละ segment
         tts = F5TTS_Advance()
-        audio_tensors, out_segments, sample_rate = [], [], None
+        audio_chunks = []
+        sr_out = None
+        out_meta = []
         for spk, utt in segments:
             ref_aud, ref_txt = refs.get(spk, refs["narator"])
             audio_dict, _ = tts.synthesize(ref_aud, ref_txt, utt, **f5_params)
-            wav, sr = audio_dict["waveform"], audio_dict["sample_rate"]
-            sample_rate = sample_rate or sr
-            if torch_imported and wav.dim() == 1:
-                wav = wav.unsqueeze(0)
-            audio_tensors.append(wav)
-            out_segments.append({"speaker": spk, "text": utt})
+            wav  = audio_dict["waveform"]
+            sr   = audio_dict["sample_rate"]
+            sr_out = sr_out or sr
+            if torch_imported and wav.dim()==1: wav = wav.unsqueeze(0)
+            audio_chunks.append(wav)
+            out_meta.append({"speaker": spk, "text": utt})
 
-        # concat
-        if torch_imported and len(audio_tensors) > 1:
-            full = torch.cat(audio_tensors, dim=1)
+        # ต่อเสียงทั้งหมด
+        if torch_imported and len(audio_chunks)>1:
+            full = torch.cat(audio_chunks, dim=1)
         else:
-            full = audio_tensors[0]
+            full = audio_chunks[0]
 
-        return ({"waveform": full, "sample_rate": sample_rate},
-                json.dumps(out_segments, ensure_ascii=False))
+        return ({"waveform": full, "sample_rate": sr_out},
+                json.dumps(out_meta, ensure_ascii=False))
