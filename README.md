@@ -89,7 +89,7 @@ pip install torch  torchaudio  --extra-index-url https://download.pytorch.org/wh
 ```
 ---
 ### 6. ติดตั้ง ffmpeg
-ใครใช้ windows, ไปหาโหลดสำหรับ windows นะครัย
+ใครใช้ windows, ไปหาโหลดสำหรับ windows
 คำสั่งนี้สำหรับ linux
 ```
 apt update && apt install -y ffmpeg
