@@ -9,11 +9,12 @@
 
 # 🚧 **Underconstruction — IN PROGRESS!** 🚧  
 _เสียงไทยที่เท่จนต้องเบิ้ลหูฟัง_  <br>
-ทดสอบผ่าน การ์ดrtx 30xxx, 40xx <br>
-rtx 50xx nightly version ยังไม่ทดสอบ<br>
-การ์ด v100, A100 ของ runpod รันไม่ได้ <br>
+✅ ทดสอบผ่าน การ์ดrtx 30xxx, 40xx support Python 3.10 Cuda 11.8 - 12.6<br>
+❌ rtx 50xx nightly version ยังไม่ support<br>
+⁉️การ์ด v100, A100 ของ runpod บางทีก็ได้ บางทีไม่ได้ แอบงงอยู่  <br>
 <br>
-**14-05-2025 ** -Fix bug windows cannot delete tmp, update new model list
+**10-05-2025** เพิ่ม โมลเดลใหม่ 6000000.pt, add requirements.txt fix error
+**14-05-2025** -Fix bug windows cannot delete tmp, update new model list
 
 ## 🎤 เกี่ยวกับโปรเจกต์นี้
 
@@ -54,8 +55,6 @@ git clone https://github.com/gordon123/ComfyUI-F5-TTS-TH.git
 ### 🔧 2. Clone repository และติดตั้ง F5-TTS-THAI (แบบ submodule)
 
 ```
-git clone https://github.com/gordon123/ComfyUI-F5-TTS-TH.git
-
 cd ComfyUI-F5-TTS-TH
 
 git submodule update --init --recursive
@@ -78,6 +77,7 @@ Portable version Comfyui เรียก จาก python ใน folder embeded 
 ```
 #FILE PATH#_embeded/python.exe -m pip install -r requirements.txt
 ```
+
 อันนี้สำหรับคนลง CpmfyUI แบบ native version
 ```
 pip install -r requirements.txt
