@@ -21,7 +21,6 @@ class FairyTaleNarratorSwitcher:
             "text": ("STRING", {"multiline": True}),
             "sample_audio_narator": ("AUDIO",),
             "sample_text_narator": ("STRING", {"default": ""}),
-            # Set default to the latest 650k model
             "model_name": (model_choices, {"default": "model_650000.pt"}),
             "seed": ("INT", {"default": -1, "min": -1}),
         }
@@ -59,6 +58,7 @@ class FairyTaleNarratorSwitcher:
                     return spk, utt
             return None, line
 
+        # Build reference dictionary
         refs = {"narator": (sample_audio_narator, sample_text_narator)}
         for i in range(1,6):
             name = kwargs.get(f"char_name_{i}", "").strip()
@@ -67,16 +67,26 @@ class FairyTaleNarratorSwitcher:
             if name and aud is not None:
                 refs[name] = (aud, txt)
 
+        # Split text into segments and map speakers robustly
         segments = []
         for raw in text.splitlines():
             line = raw.strip()
-            if not line: continue
+            if not line:
+                continue
             spk, utt = parse_line(line)
-            if spk in refs:
-                segments.append((spk, utt))
-            else:
-                segments.append(("narator", utt if spk is None else utt))
+            # Default to narrator
+            speaker_key = "narator"
+            if spk is not None:
+                # Clean tag, remove trailing punctuation and spaces
+                spk_clean = spk.strip().rstrip('：:').strip()
+                # Case-insensitive name match
+                for key in refs.keys():
+                    if key.strip().lower() == spk_clean.lower():
+                        speaker_key = key
+                        break
+            segments.append((speaker_key, utt))
 
+        # Prepare parameters for F5TTS
         f5_params = {k: kwargs[k] for k in [
             "remove_silence", "speed", "cross_fade_duration",
             "nfe_step", "cfg_strength", "sway_sampling_coef",
@@ -85,21 +95,24 @@ class FairyTaleNarratorSwitcher:
         f5_params["model_name"] = model_name
         f5_params["seed"]       = seed
 
+        # Synthesize each segment
         tts = F5TTS_Advance()
         audio_chunks = []
         sr_out = None
         out_meta = []
-        for spk, utt in segments:
-            ref_aud, ref_txt = refs.get(spk, refs["narator"])
+        for spk_key, utt in segments:
+            ref_aud, ref_txt = refs.get(spk_key, refs["narator"])
             audio_dict, _ = tts.synthesize(ref_aud, ref_txt, utt, **f5_params)
             wav  = audio_dict["waveform"]
             sr   = audio_dict["sample_rate"]
             sr_out = sr_out or sr
-            if torch_imported and wav.dim()==1: wav = wav.unsqueeze(0)
+            if torch_imported and wav.dim() == 1:
+                wav = wav.unsqueeze(0)
             audio_chunks.append(wav)
-            out_meta.append({"speaker": spk, "text": utt})
+            out_meta.append({"speaker": spk_key, "text": utt})
 
-        if torch_imported and len(audio_chunks)>1:
+        # Concatenate or return single
+        if torch_imported and len(audio_chunks) > 1:
             full = torch.cat(audio_chunks, dim=1)
         else:
             full = audio_chunks[0]
