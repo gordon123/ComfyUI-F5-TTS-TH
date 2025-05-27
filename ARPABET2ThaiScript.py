@@ -3,7 +3,9 @@
 # รายการนี้เป็นส่วนหนึ่งของระบบ TTS ภาษาไทยที่แปลงข้อความภาษาอังกฤษเป็นอักษรไทยโดยใช้ ARPAbet phonemes
 # แต่ยังไม่เสร็จสมบูรณ์ ยังอ่านภษาอังกฤษไม่ออก เต็ม 100%
 
+import os
 import re
+import csv
 import nltk
 
 # 1) Monkey-patch NLTK so g2p_en won’t try to fetch taggers
@@ -17,13 +19,24 @@ try:
 except Exception:
     g2p = None
 
-# 3) Exception table: force these words to exactly this Thai
-EXCEPTIONS = {
-    "custom":  "คัสเทิ่ม",
-    "manager": "แมนนิ๊จเจอะ",
-    "model":   "โมเดิ่ล",
-    # add more as you like...
-}
+# 3) Load exceptions mapping from CSV
+def load_exceptions(csv_filename: str) -> dict:
+    exc = {}
+    base = os.path.dirname(__file__)
+    path = os.path.join(base, csv_filename)
+    if not os.path.exists(path):
+        return exc
+    with open(path, newline='', encoding='utf-8-sig') as f:
+        reader = csv.reader(f)
+        for row in reader:
+            if not row or row[0].startswith("#"):
+                continue
+            word = row[0].strip().lower()
+            translit = row[1].strip()
+            exc[word] = translit
+    return exc
+
+EXCEPTIONS = load_exceptions("exceptions.csv")
 
 # 4) Simplified ARPABET → Thai map
 ARPABET2TH = {
