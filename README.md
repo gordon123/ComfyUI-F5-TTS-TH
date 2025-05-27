@@ -4,7 +4,7 @@
 ---
 ### Update
 ### Muti-Speaker - (27 April -2025)
-<img width="720" alt="Screenshot 2025-04-27 at 21 32 08" src="https://github.com/user-attachments/assets/6f64208c-f393-4082-adb6-e983ea34affe" /> <br>
+<img width="720" alt="add new model" src="img/Screenshot 2025-05-28 at 00.20.01.png" /> <br>
 ใช้ [ชื่อตัวละคน] กำหนด tag ใช้ตัวละครใน prompt และ ใน speaker model <br>
 
 # 🚧 **Underconstruction — IN PROGRESS!** 🚧  
