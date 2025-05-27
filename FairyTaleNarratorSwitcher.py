@@ -14,13 +14,15 @@ class FairyTaleNarratorSwitcher:
             "model_250000.pt", "model_250000_FP16.pt",
             "model_475000.pt", "model_475000_FP16.pt",
             "model_500000.pt", "model_500000_FP16.pt",
-            "model_600000.pt", "model_600000_FP16.pt"
+            "model_600000.pt", "model_600000_FP16.pt",
+            "model_650000.pt", "model_650000_FP16.pt"
         ]
         required = {
             "text": ("STRING", {"multiline": True}),
             "sample_audio_narator": ("AUDIO",),
             "sample_text_narator": ("STRING", {"default": ""}),
-            "model_name": (model_choices, {"default": "model_500000.pt"}),
+            # Set default to the latest 650k model
+            "model_name": (model_choices, {"default": "model_650000.pt"}),
             "seed": ("INT", {"default": -1, "min": -1}),
         }
         optional = {}
@@ -46,7 +48,7 @@ class FairyTaleNarratorSwitcher:
     CATEGORY = "🇹🇭 Thai TTS"
 
     def run(self, text, sample_audio_narator, sample_text_narator,
-            model_name="model_500000.pt", seed=-1, *args, **kwargs):
+            model_name="model_650000.pt", seed=-1, *args, **kwargs):
 
         def parse_line(line):
             if line.startswith('['):
