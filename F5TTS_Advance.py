@@ -7,7 +7,7 @@ import soundfile as sf
 from omegaconf import OmegaConf
 import comfy
 from .Install import Install
-from huggingface_hub import HfApi, hf_hub_url, hf_hub_download
+from huggingface_hub import HfApi, hf_hub_download
 
 # Ensure the submodule is initialized
 Install.check_install()
@@ -38,13 +38,13 @@ sys.path.pop(0)
 
 class F5TTS_Advance:
     """
-    โค้ดนี้รองรับ 3 วิธี:
-    1. WATCHED_REPOS: ดึงชื่อไฟล์ .pt จากรีโปที่เรากำหนดไว้ (dynamic dropdown)
-    2. Free-form model_path: ให้ user พิมพ์ <repo_id>/<filename>.pt เองได้
-    3. สคริปต์เช็กอัปเดต model_history.py แยกต่างหาก (ไม่เกี่ยวในคลาสนี้)
+    โค้ดนี้ปรับให้:
+    1. ดึงชื่อไฟล์ .pt จากรีโป VIZINTZOR/F5-TTS-THAI (หรือรีโปอื่นใน WATCHED_REPOS) มาเป็น dropdown
+    2. ไม่มีการกำหนด model_700000.pt แบบตายตัวอีกต่อไป—ตัวเลือกจะมาจากไฟล์จริงในรีโป
+    3. ยังกำหนดให้ผู้ใช้พิมพ์ <repo_id>/<filename>.pt ได้เอง หากอยู่นอกลิสต์ dropdown
     """
 
-    # ถ้าต้องการแสดง dropdown ของ model จากรีโปเหล่านี้ ให้เพิ่ม repo_id ลงในลิสต์
+    # รีโปที่เราจะเฝ้ามองเพื่อดึงชื่อไฟล์ .pt
     WATCHED_REPOS = [
         "VIZINTZOR/F5-TTS-THAI",
         "Muscari/F5-TTS-TH_Finetuned",
@@ -56,12 +56,12 @@ class F5TTS_Advance:
         api = HfApi()
         model_choices = []
 
-        # 1️⃣ ดึงชื่อไฟล์ .pt จากทุกรีโปที่เรากำหนดไว้
+        # ดึงชื่อไฟล์ .pt จากทุกรีโปใน WATCHED_REPOS
         for repo in cls.WATCHED_REPOS:
             try:
                 files = api.list_repo_files(repo_id=repo)
             except Exception:
-                continue
+                continue  # ข้ามถ้าดึงไม่ได้
 
             for fn in files:
                 if fn.endswith(".pt"):
@@ -78,7 +78,7 @@ class F5TTS_Advance:
                 # model_path: dropdown + free-form ให้กรอก <repo_id>/<filename>.pt
                 "model_path": (model_choices, {
                     "default": default_choice,
-                    "description": "เลือกหรือพิมพ์ <repo_id>/<filename>.pt เช่น VIZINTZOR/F5-TTS-THAI/model_700000.pt"
+                    "description": "เลือกหรือพิมพ์ <repo_id>/<filename>.pt เช่น VIZINTZOR/F5-TTS-THAI/model_650000.pt"
                 }),
                 "seed": ("INT", {"default": -1, "min": -1}),
             },
@@ -149,10 +149,10 @@ class F5TTS_Advance:
             repo_id, filename = model_path.strip().rsplit("/", 1)
         except ValueError:
             raise ValueError(
-                "กรุณากรอกในรูป <repo_id>/<filename>.pt เช่น VIZINTZOR/F5-TTS-THAI/model_700000.pt"
+                "กรุณากรอกในรูป <repo_id>/<filename>.pt เช่น VIZINTZOR/F5-TTS-THAI/model_650000.pt"
             )
 
-        # ถ้าผู้ใช้ใส่ "…/model/…" (เผื่อกรอกผิด) ให้ตัด "/model" ทิ้ง
+        # ปรับ repo_id กรณีผู้ใช้เผลอพิมพ์ “.../model/...”
         if repo_id.endswith("/model"):
             repo_id = repo_id[: -len("/model")]
 
@@ -162,7 +162,6 @@ class F5TTS_Advance:
 
         if not os.path.exists(local_model_path):
             try:
-                # ใช้ hf_hub_download เพื่อดาวน์โหลดไฟล์ .pt มาที่โฟลเดอร์ model/
                 local_model_path = hf_hub_download(
                     repo_id=repo_id,
                     filename=filename,
