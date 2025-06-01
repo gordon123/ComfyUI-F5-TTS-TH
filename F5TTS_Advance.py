@@ -39,16 +39,14 @@ sys.path.pop(0)
 class F5TTS_Advance:
     """
     โค้ดนี้ปรับให้:
-    1. ดึงชื่อไฟล์ .pt จากรีโป VIZINTZOR/F5-TTS-THAI (หรือรีโปอื่นใน WATCHED_REPOS) มาเป็น dropdown
-    2. ไม่มีการกำหนด model_700000.pt แบบตายตัวอีกต่อไป—ตัวเลือกจะมาจากไฟล์จริงในรีโป
-    3. ยังกำหนดให้ผู้ใช้พิมพ์ <repo_id>/<filename>.pt ได้เอง หากอยู่นอกลิสต์ dropdown
+    1. ดึงชื่อไฟล์ .pt จากรีโป VIZINTZOR/F5-TTS-THAI ในโฟลเดอร์ model/ มาเป็น dropdown
+    2. ให้ผู้ใช้พิมพ์ <repo_id>/model/<filename>.pt ได้เอง
     """
 
-    # รีโปที่เราจะเฝ้ามองเพื่อดึงชื่อไฟล์ .pt
+    # รีโปที่เราจะเฝ้ามองเพื่อดึงชื่อไฟล์ .pt จากโฟลเดอร์ model/
     WATCHED_REPOS = [
         "VIZINTZOR/F5-TTS-THAI",
         "Muscari/F5-TTS-TH_Finetuned",
-        # เพิ่ม repo_id อื่น ๆ ได้ตามต้องการ
     ]
 
     @classmethod
@@ -56,15 +54,16 @@ class F5TTS_Advance:
         api = HfApi()
         model_choices = []
 
-        # ดึงชื่อไฟล์ .pt จากทุกรีโปใน WATCHED_REPOS
+        # ดึงชื่อไฟล์ .pt จาก "model/" ทุกรีโปใน WATCHED_REPOS
         for repo in cls.WATCHED_REPOS:
             try:
                 files = api.list_repo_files(repo_id=repo)
             except Exception:
-                continue  # ข้ามถ้าดึงไม่ได้
+                continue
 
             for fn in files:
-                if fn.endswith(".pt"):
+                # แค่ไฟล์ที่อยู่ในโฟลเดอร์ model/ และลงท้าย .pt
+                if fn.startswith("model/") and fn.endswith(".pt"):
                     model_choices.append(f"{repo}/{fn}")
 
         model_choices = sorted(model_choices)
@@ -75,10 +74,10 @@ class F5TTS_Advance:
                 "sample_audio": ("AUDIO",),
                 "sample_text": ("STRING", {"default": "Text of sample_audio"}),
                 "text": ("STRING", {"multiline": True, "default": "สวัสดีครับ"}),
-                # model_path: dropdown + free-form ให้กรอก <repo_id>/<filename>.pt
+                # model_path: dropdown + free-form ให้กรอก <repo_id>/model/<filename>.pt
                 "model_path": (model_choices, {
                     "default": default_choice,
-                    "description": "เลือกหรือพิมพ์ <repo_id>/<filename>.pt เช่น VIZINTZOR/F5-TTS-THAI/model_650000.pt"
+                    "description": "เลือกหรือพิมพ์ <repo_id>/model/<filename>.pt เช่น VIZINTZOR/F5-TTS-THAI/model/model_650000.pt"
                 }),
                 "seed": ("INT", {"default": -1, "min": -1}),
             },
@@ -104,7 +103,7 @@ class F5TTS_Advance:
         sample_audio,
         sample_text,
         text,
-        model_path="",        # กลายมาเป็น <repo_id>/<filename>.pt
+        model_path="",        # เป็น <repo_id>/model/<filename>.pt
         seed=-1,
         remove_silence=True,
         speed=1.0,
@@ -144,35 +143,34 @@ class F5TTS_Advance:
         else:
             raise FileNotFoundError("Config file not found")
 
-        # ── 4. แยก model_path เป็น repo_id กับ filename แล้วดาวน์โหลด ───────
+        # ── 4. แยก model_path เป็น repo_id กับ relative_path ─────────────────
         try:
-            repo_id, filename = model_path.strip().rsplit("/", 1)
+            repo_id, relpath = model_path.strip().split("/", 1)
         except ValueError:
             raise ValueError(
-                "กรุณากรอกในรูป <repo_id>/<filename>.pt เช่น VIZINTZOR/F5-TTS-THAI/model_650000.pt"
+                "กรุณากรอกเป็น <repo_id>/model/<filename>.pt เช่น VIZINTZOR/F5-TTS-THAI/model/model_650000.pt"
             )
 
-        # ปรับ repo_id กรณีผู้ใช้เผลอพิมพ์ “.../model/...”
-        if repo_id.endswith("/model"):
-            repo_id = repo_id[: -len("/model")]
+        if not relpath.startswith("model/") or not relpath.endswith(".pt"):
+            raise ValueError("ต้องระบุไฟล์จากโฟลเดอร์ 'model/' และลงท้ายด้วย .pt")
 
+        # ── 5. ดาวน์โหลดไฟล์ .pt มาเก็บโฟลเดอร์ model/ ของ custom node ─────
         mdir = os.path.join(Install.base_path, "model")
         os.makedirs(mdir, exist_ok=True)
-        local_model_path = os.path.join(mdir, filename)
+        local_model_path = os.path.join(mdir, os.path.basename(relpath))
 
         if not os.path.exists(local_model_path):
             try:
                 local_model_path = hf_hub_download(
                     repo_id=repo_id,
-                    filename=filename,
+                    filename=relpath,
                     cache_dir=mdir,
-                    local_dir=mdir,
-                    local_dir_use_symlinks=False
+                    local_dir=mdir
                 )
             except Exception as e:
-                raise RuntimeError(f"❌ ไม่สามารถดาวน์โหลดโมเดลจาก {repo_id}/{filename} ได้: {e}")
+                raise RuntimeError(f"❌ ไม่สามารถดาวน์โหลดโมเดลจาก {repo_id}/{relpath} ได้: {e}")
 
-        # ── 5. เตรียม vocab.txt ────────────────────────────────────
+        # ── 6. เตรียม vocab.txt จาก repo เดียวกัน ────────────────────
         vdir = os.path.join(Install.base_path, "vocab")
         os.makedirs(vdir, exist_ok=True)
         vocab_path = os.path.join(vdir, "vocab.txt")
@@ -183,13 +181,12 @@ class F5TTS_Advance:
                     repo_id=repo_id,
                     filename="vocab.txt",
                     cache_dir=vdir,
-                    local_dir=vdir,
-                    local_dir_use_symlinks=False
+                    local_dir=vdir
                 )
             except Exception as e:
                 raise RuntimeError(f"❌ ไม่สามารถดาวน์โหลด vocab.txt จาก {repo_id} ได้: {e}")
 
-        # ── 6. โหลดโมเดล + vocoder ลง device ────────────────────────
+        # ── 7. โหลดโมเดล + vocoder ลง device ────────────────────────
         model = load_model(DiT, model_cfg, local_model_path, vocab_file=vocab_path, mel_spec_type="vocos")
         vocoder = load_vocoder("vocos")
         device = comfy.model_management.get_torch_device()
@@ -198,10 +195,10 @@ class F5TTS_Advance:
         if seed >= 0:
             torch.manual_seed(seed)
 
-        # ── 7. จัด fix_duration ────────────────────────────────────
+        # ── 8. จัด fix_duration ────────────────────────────────────
         fd = None if fix_duration == 0.0 else fix_duration
 
-        # ── 8. Inference: สร้างเสียง ────────────────────────────────
+        # ── 9. Inference: สร้างเสียง ────────────────────────────────
         audio_np, sr_out, _ = infer_process(
             ref_audio, ref_text, cleaned,
             model, vocoder=vocoder,
@@ -216,12 +213,12 @@ class F5TTS_Advance:
             device=device
         )
 
-        # ── 9. แปลงเป็น Tensor ───────────────────────────────────
+        # ── 10. แปลงเป็น Tensor ───────────────────────────────────
         audio_tensor = torch.from_numpy(audio_np)
         if audio_tensor.ndim == 1:
             audio_tensor = audio_tensor.unsqueeze(0)
 
-        # ── 10. ตัด silence ถ้าต้องการ ───────────────────────────────
+        # ── 11. ตัด silence ถ้าต้องการ ───────────────────────────────
         if remove_silence:
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp2:
                 sf.write(tmp2.name, audio_tensor.cpu().numpy().T, sr_out)
