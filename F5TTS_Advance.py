@@ -94,7 +94,7 @@ class F5TTS_Advance:
                 "sample_text": ("STRING", {"default": "Text of sample_audio"}),
                 "text": ("STRING", {"multiline": True, "default": "สวัสดีครับ\nทำไมวันนี้อากาศดี"}),
                 "model_path": ("STRING", {
-                    "default": default_val,
+                    "default": "VIZINTZOR/F5-TTS-THAI/model/model_700000.pt",
                     "description": (
                         "พิมพ์ <namespace>/<repo_name>/<filename>.pt หรือ "
                         "<namespace>/<repo_name>/model/<filename>.pt\n"
