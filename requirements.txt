@@ -22,3 +22,6 @@ bitsandbytes>0.37.0
 torch-time-stretch
 accelerate>=0.33.0
 protobuf==3.19.6
+
+# ไลบรารีเสริมสำหรับสคริปต์เช็กอัปเดต
+huggingface_hub>=0.15.0
