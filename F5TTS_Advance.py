@@ -38,9 +38,10 @@ sys.path.pop(0)
 
 class F5TTS_Advance:
     """
-    โค้ดปรับใหม่เพื่อให้:
-    1. แสดงรายการไฟล์ในโฟลเดอร์ model/ จากรีโปที่กำหนดไว้ (เป็นตัวช่วยแนะนำ)
-    2. ช่อง model_path เป็น STRING ให้พิมพ์ <repo_id>/<filename>.pt หรือ <repo_id>/model/<filename>.pt ได้เต็มที่
+    โค้ดนี้ปรับให้:
+    1. ดึงชื่อไฟล์ .pt จากรีโป VIZINTZOR/F5-TTS-THAI ในโฟลเดอร์ model/ มาเป็นตัวช่วยแนะนำ
+    2. ช่อง model_path เป็น STRING ให้พิมพ์ <namespace>/<repo_name>/<filename>.pt
+       หรือ <namespace>/<repo_name>/model/<filename>.pt ได้ จะเติม 'model/' ให้อัตโนมัติ
     """
 
     WATCHED_REPOS = [
@@ -53,16 +54,14 @@ class F5TTS_Advance:
         api = HfApi()
         suggested = []
 
-        # ดึงชื่อไฟล์ .pt จาก "model/" ทุกรีโปที่เฝ้ามอง
+        # ดึงชื่อไฟล์ .pt จาก "model/" ทุกรีโปที่เรากำหนดไว้
         for repo in cls.WATCHED_REPOS:
             try:
                 files = api.list_repo_files(repo_id=repo)
             except Exception:
                 continue
-
             for fn in files:
                 if fn.startswith("model/") and fn.endswith(".pt"):
-                    # เก็บเป็น "<repo_id>/model/<filename>.pt"
                     suggested.append(f"{repo}/{fn}")
 
         suggested = sorted(suggested)
@@ -73,13 +72,16 @@ class F5TTS_Advance:
                 "sample_audio": ("AUDIO",),
                 "sample_text": ("STRING", {"default": "Text of sample_audio"}),
                 "text": ("STRING", {"multiline": True, "default": "สวัสดีครับ"}),
-                # เปลี่ยนเป็น STRING ให้พิมพ์เองได้ พร้อมโชว์ "default" เป็นไฟล์ล่าสุดที่เจอ
+                # model_path: STRING ให้พิมพ์ <namespace>/<repo>/<filename>.pt
+                # หรือ <namespace>/<repo>/model/<filename>.pt
                 "model_path": ("STRING", {
                     "default": default_val,
                     "description": (
-                        "พิมพ์ <repo_id>/<filename>.pt หรือ <repo_id>/model/<filename>.pt \n"
-                        "เช่น VIZINTZOR/F5-TTS-THAI/model/model_650000.pt\n\n"
-                        "แนะนำไฟล์ (suggested):\n" + "\n".join(suggested)
+                        "พิมพ์ <namespace>/<repo_name>/<filename>.pt หรือ "
+                        "<namespace>/<repo_name>/model/<filename>.pt\n"
+                        "เช่น VIZINTZOR/F5-TTS-THAI/model_650000_FP16.pt\n\n"
+                        "ตัวอย่างไฟล์ใน model/ (suggested):\n" +
+                        "\n".join(suggested)
                     )
                 }),
                 "seed": ("INT", {"default": -1, "min": -1}),
@@ -106,7 +108,7 @@ class F5TTS_Advance:
         sample_audio,
         sample_text,
         text,
-        model_path="",        # now free-form STRING
+        model_path="",        # STRING เช่น <namespace>/<repo>/<filename>.pt
         seed=-1,
         remove_silence=True,
         speed=1.0,
@@ -146,15 +148,19 @@ class F5TTS_Advance:
         else:
             raise FileNotFoundError("Config file not found")
 
-        # ── 4. แยก model_path เป็น repo_id และชื่อไฟล์ ────────────────────
-        try:
-            repo_id, rest = model_path.strip().split("/", 1)
-        except ValueError:
+        # ── 4. แยก model_path เป็น namespace/repo และเส้นทางไฟล์ ────────────────────
+        parts = model_path.strip().split("/")
+        if len(parts) < 3:
             raise ValueError(
-                "กรุณากรอกเป็น <repo_id>/<filename>.pt หรือ <repo_id>/model/<filename>.pt"
+                "กรุณากรอกเป็น <namespace>/<repo_name>/<filename>.pt "
+                "หรือ <namespace>/<repo_name>/model/<filename>.pt"
             )
 
-        # ถ้า user พิมพ์ <repo_id>/<filename>.pt ให้ prefix 'model/' อัตโนมัติ
+        # namespace/repo คือสองส่วนแรกเสมอ
+        repo_id = f"{parts[0]}/{parts[1]}"
+        rest = "/".join(parts[2:])  # ส่วนที่เหลืออาจเป็น "model_650000.pt" หรือ "model/xxx.pt"
+
+        # ถ้า rest ไม่ขึ้นต้นด้วย 'model/' ให้เติมอัตโนมัติ
         if rest.endswith(".pt") and not rest.startswith("model/"):
             relpath = f"model/{rest}"
         else:
@@ -163,7 +169,7 @@ class F5TTS_Advance:
         if not relpath.startswith("model/") or not relpath.endswith(".pt"):
             raise ValueError("ต้องระบุไฟล์จากโฟลเดอร์ 'model/' และลงท้ายด้วย .pt")
 
-        # ── 5. ดาวน์โหลด .pt มาเก็บไว้ในโฟลเดอร์ 'model/' ของ custom node ───
+        # ── 5. ดาวน์โหลดโมเดล .pt ไปเก็บในโฟลเดอร์ model/ ภายใต้ base_path ────────
         mdir = os.path.join(Install.base_path, "model")
         os.makedirs(mdir, exist_ok=True)
         local_model_path = os.path.join(mdir, os.path.basename(relpath))
@@ -174,7 +180,7 @@ class F5TTS_Advance:
                     repo_id=repo_id,
                     filename=relpath,
                     cache_dir=mdir,
-                    local_dir=mdir
+                    local_dir=mdir,
                 )
             except Exception as e:
                 raise RuntimeError(f"❌ ไม่สามารถดาวน์โหลดโมเดลจาก {repo_id}/{relpath} ได้: {e}")
@@ -190,7 +196,7 @@ class F5TTS_Advance:
                     repo_id=repo_id,
                     filename="vocab.txt",
                     cache_dir=vdir,
-                    local_dir=vdir
+                    local_dir=vdir,
                 )
             except Exception as e:
                 raise RuntimeError(f"❌ ไม่สามารถดาวน์โหลด vocab.txt จาก {repo_id} ได้: {e}")
@@ -236,7 +242,7 @@ class F5TTS_Advance:
                 try:
                     os.unlink(tmp2.name)
                 except PermissionError:
-                    print(f"PermissionError: Unable to delete {tmp2.name}. Please delete it manually.")
+                    print(f"PermissionError: Unable to delete {tmp2.name}. Please deleteมัน manually.")
                 except Exception as e:
                     print(f"Error deleting {tmp2.name}: {e}")
 
