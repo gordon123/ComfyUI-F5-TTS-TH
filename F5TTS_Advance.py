@@ -232,8 +232,8 @@ class F5TTS_Advance:
         # 9. fix_duration
         fd = None if fix_duration == 0.0 else fix_duration
 
-        # 10. เรียก infer_process โดยส่ง cleaned_full (มี newline) ให้ chunk_text ทำงาน
-        audio_np_full, sr_out, _ = infer_process(
+        # 10. เรียก infer_process โดยส่ง cleaned_full (มี newline) ให้ chunk_text แยก batch เอง
+        full_audio_np, sr_out, _ = infer_process(
             ref_audio, ref_text, cleaned_full,
             model, vocoder=vocoder,
             speed=speed,
@@ -248,7 +248,7 @@ class F5TTS_Advance:
         )
 
         # 11. แปลงเป็น Tensor
-        audio_tensor = torch.from_numpy(audio_np_full)
+        audio_tensor = torch.from_numpy(full_audio_np)
         if audio_tensor.ndim == 1:
             audio_tensor = audio_tensor.unsqueeze(0)
 
