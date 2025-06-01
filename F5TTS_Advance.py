@@ -152,13 +152,17 @@ class F5TTS_Advance:
                 "กรุณากรอกในรูป <repo_id>/<filename>.pt เช่น VIZINTZOR/F5-TTS-THAI/model_700000.pt"
             )
 
+        # ถ้าผู้ใช้ใส่ "…/model/…" (เผื่อกรอกผิด) ให้ตัด "/model" ทิ้ง
+        if repo_id.endswith("/model"):
+            repo_id = repo_id[: -len("/model")]
+
         mdir = os.path.join(Install.base_path, "model")
         os.makedirs(mdir, exist_ok=True)
         local_model_path = os.path.join(mdir, filename)
 
         if not os.path.exists(local_model_path):
             try:
-                # เปลี่ยนมาใช้ hf_hub_download แทน cached_download
+                # ใช้ hf_hub_download เพื่อดาวน์โหลดไฟล์ .pt มาที่โฟลเดอร์ model/
                 local_model_path = hf_hub_download(
                     repo_id=repo_id,
                     filename=filename,
