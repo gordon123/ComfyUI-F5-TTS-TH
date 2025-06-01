@@ -7,7 +7,7 @@ import soundfile as sf
 from omegaconf import OmegaConf
 import comfy
 from .Install import Install
-from huggingface_hub import HfApi, hf_hub_url, cached_download
+from huggingface_hub import HfApi, hf_hub_url, hf_hub_download
 
 # Ensure the submodule is initialized
 Install.check_install()
@@ -41,10 +41,10 @@ class F5TTS_Advance:
     โค้ดนี้รองรับ 3 วิธี:
     1. WATCHED_REPOS: ดึงชื่อไฟล์ .pt จากรีโปที่เรากำหนดไว้ (dynamic dropdown)
     2. Free-form model_path: ให้ user พิมพ์ <repo_id>/<filename>.pt เองได้
-    3. ส่วนสคริปต์เช็กอัปเดต model_history.py แยกต่างหาก (ไม่เกี่ยวในคลาสนี้)
+    3. สคริปต์เช็กอัปเดต model_history.py แยกต่างหาก (ไม่เกี่ยวในคลาสนี้)
     """
 
-    # ถ้าต้องการแสดง dropdown ของ model ที่จะโหลดจากรีโปเหล่านี้ ให้เพิ่มในลิสต์
+    # ถ้าต้องการแสดง dropdown ของ model จากรีโปเหล่านี้ ให้เพิ่ม repo_id ลงในลิสต์
     WATCHED_REPOS = [
         "VIZINTZOR/F5-TTS-THAI",
         "Muscari/F5-TTS-TH_Finetuned",
@@ -158,21 +158,31 @@ class F5TTS_Advance:
 
         if not os.path.exists(local_model_path):
             try:
-                url = hf_hub_url(repo_id=repo_id, filename=filename)
-                local_model_path = cached_download(url, cache_dir=mdir)
+                # เปลี่ยนมาใช้ hf_hub_download แทน cached_download
+                local_model_path = hf_hub_download(
+                    repo_id=repo_id,
+                    filename=filename,
+                    cache_dir=mdir,
+                    local_dir=mdir,
+                    local_dir_use_symlinks=False
+                )
             except Exception as e:
                 raise RuntimeError(f"❌ ไม่สามารถดาวน์โหลดโมเดลจาก {repo_id}/{filename} ได้: {e}")
 
         # ── 5. เตรียม vocab.txt ────────────────────────────────────
-        # สมมติเวลาฝึกกับ F5-TTS ทุก repo จะมี vocab.txt
         vdir = os.path.join(Install.base_path, "vocab")
         os.makedirs(vdir, exist_ok=True)
         vocab_path = os.path.join(vdir, "vocab.txt")
 
         if not os.path.exists(vocab_path):
             try:
-                vocab_url = hf_hub_url(repo_id=repo_id, filename="vocab.txt")
-                cached_download(vocab_url, cache_dir=vdir)
+                hf_hub_download(
+                    repo_id=repo_id,
+                    filename="vocab.txt",
+                    cache_dir=vdir,
+                    local_dir=vdir,
+                    local_dir_use_symlinks=False
+                )
             except Exception as e:
                 raise RuntimeError(f"❌ ไม่สามารถดาวน์โหลด vocab.txt จาก {repo_id} ได้: {e}")
 
