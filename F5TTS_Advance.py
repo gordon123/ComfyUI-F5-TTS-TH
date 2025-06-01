@@ -86,7 +86,7 @@ class F5TTS_Advance:
                     suggested.append(f"{repo}/{fn}")
 
         suggested = sorted(suggested)
-        default_val = "VIZINTZOR/F5-TTS-THAI/model/model_700000.pt" if not suggested else suggested[-1]
+        default_val = "VIZINTZOR/F5-TTS-THAI/model/model_700000.pt" 
 
         return {
             "required": {
