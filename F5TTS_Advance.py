@@ -38,12 +38,11 @@ sys.path.pop(0)
 
 class F5TTS_Advance:
     """
-    โค้ดนี้ปรับให้:
-    1. ดึงชื่อไฟล์ .pt จากรีโป VIZINTZOR/F5-TTS-THAI ในโฟลเดอร์ model/ มาเป็น dropdown
-    2. ให้ผู้ใช้พิมพ์ <repo_id>/model/<filename>.pt ได้เอง
+    โค้ดปรับใหม่เพื่อให้:
+    1. แสดงรายการไฟล์ในโฟลเดอร์ model/ จากรีโปที่กำหนดไว้ (เป็นตัวช่วยแนะนำ)
+    2. ช่อง model_path เป็น STRING ให้พิมพ์ <repo_id>/<filename>.pt หรือ <repo_id>/model/<filename>.pt ได้เต็มที่
     """
 
-    # รีโปที่เราจะเฝ้ามองเพื่อดึงชื่อไฟล์ .pt จากโฟลเดอร์ model/
     WATCHED_REPOS = [
         "VIZINTZOR/F5-TTS-THAI",
         "Muscari/F5-TTS-TH_Finetuned",
@@ -52,9 +51,9 @@ class F5TTS_Advance:
     @classmethod
     def INPUT_TYPES(cls):
         api = HfApi()
-        model_choices = []
+        suggested = []
 
-        # ดึงชื่อไฟล์ .pt จาก "model/" ทุกรีโปใน WATCHED_REPOS
+        # ดึงชื่อไฟล์ .pt จาก "model/" ทุกรีโปที่เฝ้ามอง
         for repo in cls.WATCHED_REPOS:
             try:
                 files = api.list_repo_files(repo_id=repo)
@@ -62,22 +61,26 @@ class F5TTS_Advance:
                 continue
 
             for fn in files:
-                # แค่ไฟล์ที่อยู่ในโฟลเดอร์ model/ และลงท้าย .pt
                 if fn.startswith("model/") and fn.endswith(".pt"):
-                    model_choices.append(f"{repo}/{fn}")
+                    # เก็บเป็น "<repo_id>/model/<filename>.pt"
+                    suggested.append(f"{repo}/{fn}")
 
-        model_choices = sorted(model_choices)
-        default_choice = model_choices[-1] if model_choices else ""
+        suggested = sorted(suggested)
+        default_val = suggested[-1] if suggested else ""
 
         return {
             "required": {
                 "sample_audio": ("AUDIO",),
                 "sample_text": ("STRING", {"default": "Text of sample_audio"}),
                 "text": ("STRING", {"multiline": True, "default": "สวัสดีครับ"}),
-                # model_path: dropdown + free-form ให้กรอก <repo_id>/model/<filename>.pt
-                "model_path": (model_choices, {
-                    "default": default_choice,
-                    "description": "เลือกหรือพิมพ์ <repo_id>/model/<filename>.pt เช่น VIZINTZOR/F5-TTS-THAI/model/model_650000.pt"
+                # เปลี่ยนเป็น STRING ให้พิมพ์เองได้ พร้อมโชว์ "default" เป็นไฟล์ล่าสุดที่เจอ
+                "model_path": ("STRING", {
+                    "default": default_val,
+                    "description": (
+                        "พิมพ์ <repo_id>/<filename>.pt หรือ <repo_id>/model/<filename>.pt \n"
+                        "เช่น VIZINTZOR/F5-TTS-THAI/model/model_650000.pt\n\n"
+                        "แนะนำไฟล์ (suggested):\n" + "\n".join(suggested)
+                    )
                 }),
                 "seed": ("INT", {"default": -1, "min": -1}),
             },
@@ -103,7 +106,7 @@ class F5TTS_Advance:
         sample_audio,
         sample_text,
         text,
-        model_path="",        # เป็น <repo_id>/model/<filename>.pt
+        model_path="",        # now free-form STRING
         seed=-1,
         remove_silence=True,
         speed=1.0,
@@ -143,18 +146,24 @@ class F5TTS_Advance:
         else:
             raise FileNotFoundError("Config file not found")
 
-        # ── 4. แยก model_path เป็น repo_id กับ relative_path ─────────────────
+        # ── 4. แยก model_path เป็น repo_id และชื่อไฟล์ ────────────────────
         try:
-            repo_id, relpath = model_path.strip().split("/", 1)
+            repo_id, rest = model_path.strip().split("/", 1)
         except ValueError:
             raise ValueError(
-                "กรุณากรอกเป็น <repo_id>/model/<filename>.pt เช่น VIZINTZOR/F5-TTS-THAI/model/model_650000.pt"
+                "กรุณากรอกเป็น <repo_id>/<filename>.pt หรือ <repo_id>/model/<filename>.pt"
             )
+
+        # ถ้า user พิมพ์ <repo_id>/<filename>.pt ให้ prefix 'model/' อัตโนมัติ
+        if rest.endswith(".pt") and not rest.startswith("model/"):
+            relpath = f"model/{rest}"
+        else:
+            relpath = rest
 
         if not relpath.startswith("model/") or not relpath.endswith(".pt"):
             raise ValueError("ต้องระบุไฟล์จากโฟลเดอร์ 'model/' และลงท้ายด้วย .pt")
 
-        # ── 5. ดาวน์โหลดไฟล์ .pt มาเก็บโฟลเดอร์ model/ ของ custom node ─────
+        # ── 5. ดาวน์โหลด .pt มาเก็บไว้ในโฟลเดอร์ 'model/' ของ custom node ───
         mdir = os.path.join(Install.base_path, "model")
         os.makedirs(mdir, exist_ok=True)
         local_model_path = os.path.join(mdir, os.path.basename(relpath))
@@ -227,7 +236,7 @@ class F5TTS_Advance:
                 try:
                     os.unlink(tmp2.name)
                 except PermissionError:
-                    print(f"PermissionError: Unable to delete {tmp2.name}. Please deleteมัน manually.")
+                    print(f"PermissionError: Unable to delete {tmp2.name}. Please delete it manually.")
                 except Exception as e:
                     print(f"Error deleting {tmp2.name}: {e}")
 
