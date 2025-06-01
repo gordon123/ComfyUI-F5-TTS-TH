@@ -63,7 +63,7 @@ def download_with_progress(url: str, local_path: str):
 class F5TTS_Advance:
     """
     ปรับโค้ดให้อิง path ของ submodule F5TTS-on-Pod model folder โดยไม่แก้ core:
-    แล้วเพิ่ม logic แยกบรรทัดจาก text input ก่อน infer ทีละบรรทัด
+    แล้วปรับ logic ส่ง full text เข้า infer_process เพื่อให้ chunk_text แยก newline เอง
     """
 
     WATCHED_REPOS = [
@@ -86,15 +86,16 @@ class F5TTS_Advance:
                     suggested.append(f"{repo}/{fn}")
 
         suggested = sorted(suggested)
-        default_val = suggested[-1] if suggested else ""
+        default_val = "VIZINTZOR/F5-TTS-THAI/model/model_700000.pt" if not suggested else suggested[-1]
 
         return {
             "required": {
                 "sample_audio": ("AUDIO",),
                 "sample_text": ("STRING", {"default": "Text of sample_audio"}),
+                # ส่ง full cleaned text เข้า infer_process
                 "text": ("STRING", {"multiline": True, "default": "สวัสดีครับ\nทำไมวันนี้อากาศดี"}),
                 "model_path": ("STRING", {
-                    "default": "VIZINTZOR/F5-TTS-THAI/model/model_700000.pt",
+                    "default": default_val,
                     "description": (
                         "พิมพ์ <namespace>/<repo_name>/<filename>.pt หรือ "
                         "<namespace>/<repo_name>/model/<filename>.pt\n"
@@ -125,7 +126,7 @@ class F5TTS_Advance:
         self,
         sample_audio,
         sample_text,
-        text,            # ข้อความหลายบรรทัด (มี \n จริง ๆ จาก Enter)
+        text,            # ข้อความหลายบรรทัด (มี \n)
         model_path="",
         seed=-1,
         remove_silence=True,
@@ -137,14 +138,11 @@ class F5TTS_Advance:
         fix_duration=0.0,
         max_chars=120,
     ):
-        # 1. transliterate + clean (แปลงทั้งบล็อกก่อน)
+        # 1. transliterate + clean (แปลงทั้งข้อความรวมทั้งบล็อก)
         translit_full = eng_to_thai_translit(text)
         cleaned_full = process_thai_repeat(replace_numbers_with_thai(translit_full))
 
-        # 2. แยกเป็นรายบรรทัดตาม newline
-        lines = cleaned_full.split("\n")
-
-        # 3. เตรียม reference audio (เหมือนเดิม)
+        # 2. เตรียม reference audio (เหมือนเดิม)
         wav = sample_audio["waveform"].float().contiguous()
         if wav.ndim == 3:
             wav = wav.squeeze()
@@ -158,7 +156,7 @@ class F5TTS_Advance:
         ref_audio, ref_text = preprocess_ref_audio_text(ref_path, sample_text)
         os.unlink(ref_path)
 
-        # 4. โหลด config ของโมเดล (เหมือนเดิม)
+        # 3. โหลด config ของโมเดล (เหมือนเดิม)
         cfg_dir = os.path.join(Install.base_path, "src", "f5_tts", "configs")
         for fn in ["F5TTS_Base.yaml", "F5TTS_Base_train.yaml"]:
             p = os.path.join(cfg_dir, fn)
@@ -168,7 +166,7 @@ class F5TTS_Advance:
         else:
             raise FileNotFoundError("Config file not found")
 
-        # 5. แยก model_path → repo_id + relpath
+        # 4. แยก model_path → repo_id + relpath
         parts = model_path.strip().split("/")
         if len(parts) < 3:
             raise ValueError(
@@ -184,7 +182,7 @@ class F5TTS_Advance:
         if not relpath.startswith("model/") or not relpath.endswith(".pt"):
             raise ValueError("ต้องระบุไฟล์จากโฟลเดอร์ 'model/' และลงท้ายด้วย .pt")
 
-        # 6. เลือกที่เก็บโมเดล: ถ้ามี submodule อยู่ ให้ใช้นั่น ถ้าไม่มีให้ fallback
+        # 5. เลือกที่เก็บโมเดล: ถ้ามี submodule อยู่ ให้ใช้นั่น ถ้าไม่มีให้ fallback
         submod_model_dir = os.path.join(
             Install.base_path, "submodules", "F5TTS-on-Pod", "model", "model"
         )
@@ -196,7 +194,7 @@ class F5TTS_Advance:
         filename = os.path.basename(relpath)
         local_model_path = os.path.join(mdir, filename)
 
-        # 7. ดาวน์โหลดโมเดลถ้ายังไม่มี (พร้อม progress bar)
+        # 6. ดาวน์โหลดโมเดลถ้ายังไม่มี (พร้อม progress bar)
         if not os.path.exists(local_model_path):
             url = hf_hub_url(repo_id=repo_id, filename=relpath)
             try:
@@ -204,7 +202,7 @@ class F5TTS_Advance:
             except Exception as e:
                 raise RuntimeError(f"❌ ไม่สามารถดาวน์โหลดโมเดลจาก {repo_id}/{relpath} ได้: {e}")
 
-        # 8. เตรียม vocab.txt (similar logic)
+        # 7. เตรียม vocab.txt (similar logic)
         submod_vocab_dir = os.path.join(
             Install.base_path, "submodules", "F5TTS-on-Pod", "vocab"
         )
@@ -222,7 +220,7 @@ class F5TTS_Advance:
             except Exception as e:
                 raise RuntimeError(f"❌ ไม่สามารถดาวน์โหลด vocab.txt จาก {repo_id} ได้: {e}")
 
-        # 9. โหลดโมเดล + vocoder ลง device (เหมือนเดิม)
+        # 8. โหลดโมเดล + vocoder ลง device (เหมือนเดิม)
         model = load_model(DiT, model_cfg, local_model_path, vocab_file=vocab_path, mel_spec_type="vocos")
         vocoder = load_vocoder("vocos")
         device = comfy.model_management.get_torch_device()
@@ -231,46 +229,30 @@ class F5TTS_Advance:
         if seed >= 0:
             torch.manual_seed(seed)
 
-        # 10. fix_duration
+        # 9. fix_duration
         fd = None if fix_duration == 0.0 else fix_duration
 
-        # 11. Loop inference ทีละบรรทัด
-        audio_segments = []
-        for one_line in lines:
-            one_line = one_line.strip()
-            if not one_line:
-                continue
-            # ให้ local_max_chars มากกว่า length ของ one_line เล็กน้อย
-            local_max_chars = max(len(one_line) + 10, max_chars)
+        # 10. เรียก infer_process โดยส่ง cleaned_full (มี newline) ให้ chunk_text ทำงาน
+        audio_np_full, sr_out, _ = infer_process(
+            ref_audio, ref_text, cleaned_full,
+            model, vocoder=vocoder,
+            speed=speed,
+            cross_fade_duration=cross_fade_duration,
+            nfe_step=nfe_step,
+            cfg_strength=cfg_strength,
+            sway_sampling_coef=sway_sampling_coef,
+            fix_duration=fd,
+            set_max_chars=max_chars,
+            mel_spec_type="vocos",
+            device=device
+        )
 
-            audio_np_line, sr_out, _ = infer_process(
-                ref_audio, ref_text, one_line,
-                model, vocoder=vocoder,
-                speed=speed,
-                cross_fade_duration=cross_fade_duration,
-                nfe_step=nfe_step,
-                cfg_strength=cfg_strength,
-                sway_sampling_coef=sway_sampling_coef,
-                fix_duration=fd,
-                set_max_chars=local_max_chars,
-                mel_spec_type="vocos",
-                device=device
-            )
-            audio_segments.append(audio_np_line)
-
-        # 12. Concatenate แต่ละบรรทัดเป็นไฟล์เดียว
-        import numpy as np
-        if len(audio_segments) > 1:
-            full_audio_np = np.concatenate(audio_segments, axis=-1)
-        else:
-            full_audio_np = audio_segments[0]
-
-        # 13. แปลงเป็น Tensor
-        audio_tensor = torch.from_numpy(full_audio_np)
+        # 11. แปลงเป็น Tensor
+        audio_tensor = torch.from_numpy(audio_np_full)
         if audio_tensor.ndim == 1:
             audio_tensor = audio_tensor.unsqueeze(0)
 
-        # 14. ตัด silence ถ้าต้องการ
+        # 12. ตัด silence ถ้าต้องการ
         if remove_silence:
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp2:
                 sf.write(tmp2.name, audio_tensor.cpu().numpy().T, sr_out)
@@ -281,5 +263,5 @@ class F5TTS_Advance:
                 except PermissionError:
                     pass
 
-        # 15. ส่งกลับพร้อมข้อความเต็ม (มี newline เหมือนเดิม)
-        return {"waveform": audio_tensor, "sample_rate": sr_out}, "\n".join(lines)
+        # 13. ส่งกลับพร้อมข้อความเต็ม (มี newline เหมือนเดิม)
+        return {"waveform": audio_tensor, "sample_rate": sr_out}, cleaned_full
