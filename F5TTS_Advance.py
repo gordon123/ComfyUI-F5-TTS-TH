@@ -279,8 +279,6 @@ class F5TTS_Advance:
                 try:
                     os.unlink(tmp2.name)
                 except PermissionError:
-                    print(f"PermissionError: Unable to delete {tmp2.name}.")
-                except Exception:
                     pass
 
         # 15. ส่งกลับพร้อมข้อความเต็ม (มี newline เหมือนเดิม)
