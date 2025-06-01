@@ -227,7 +227,7 @@ class F5TTS_Advance:
                 try:
                     os.unlink(tmp2.name)
                 except PermissionError:
-                    print(f"PermissionError: Unable to delete {tmp2.name}. Please delete it manually.")
+                    print(f"PermissionError: Unable to delete {tmp2.name}. Please deleteมัน manually.")
                 except Exception as e:
                     print(f"Error deleting {tmp2.name}: {e}")
 
