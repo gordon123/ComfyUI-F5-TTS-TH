@@ -30,7 +30,7 @@
 
 หรือกรณีที่ custom node ไม่ดาวโหลดโมเดลให้อัตโนมัติ ให้เราใช้ wget ดาวโหลด ไฟล์โมเดลไปไว้ในนี้ <br>
 ```
-cd /workspace/ComfyUI/custom_nodes/ComfyUI-F5-TTS-TH/submodules/F5TTS-on-Pod/model/<br>
+cd /workspace/ComfyUI/custom_nodes/ComfyUI-F5-TTS-TH/submodules/F5TTS-on-Pod/model/
 ```
 
 
