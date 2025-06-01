@@ -7,7 +7,11 @@ import soundfile as sf
 from omegaconf import OmegaConf
 import comfy
 from .Install import Install
-from huggingface_hub import HfApi, hf_hub_download
+
+# เพิ่มไลบรารีใหม่สำหรับดาวน์โหลดพร้อม progress bar
+import requests
+from tqdm.auto import tqdm
+from huggingface_hub import HfApi, hf_hub_url
 
 # Ensure the submodule is initialized
 Install.check_install()
@@ -36,12 +40,37 @@ from f5_tts.cleantext.th_repeat import process_thai_repeat
 sys.path.pop(0)
 
 
+def download_with_progress(url: str, local_path: str):
+    """
+    ดาวน์โหลดไฟล์จาก URL แล้วแสดง progress bar ด้วย tqdm
+    """
+    response = requests.get(url, stream=True)
+    response.raise_for_status()
+    total_bytes = int(response.headers.get("content-length", 0))
+    chunk_size = 8192
+
+    # สร้าง tqdm progress bar
+    with tqdm(
+        total=total_bytes,
+        unit="iB",
+        unit_scale=True,
+        desc=os.path.basename(local_path),
+        leave=False,
+    ) as t:
+        with open(local_path, "wb") as f:
+            for chunk in response.iter_content(chunk_size=chunk_size):
+                if chunk:
+                    f.write(chunk)
+                    t.update(len(chunk))
+
+
 class F5TTS_Advance:
     """
     โค้ดนี้ปรับให้:
     1. ดึงชื่อไฟล์ .pt จากรีโป VIZINTZOR/F5-TTS-THAI ในโฟลเดอร์ model/ มาเป็นตัวช่วยแนะนำ
     2. ช่อง model_path เป็น STRING ให้พิมพ์ <namespace>/<repo_name>/<filename>.pt
        หรือ <namespace>/<repo_name>/model/<filename>.pt ได้ จะเติม 'model/' ให้อัตโนมัติ
+    3. ดาวน์โหลดไฟล์โมเดลด้วย requests พร้อม tqdm progress bar
     """
 
     WATCHED_REPOS = [
@@ -158,7 +187,7 @@ class F5TTS_Advance:
 
         # namespace/repo คือสองส่วนแรกเสมอ
         repo_id = f"{parts[0]}/{parts[1]}"
-        rest = "/".join(parts[2:])  # ส่วนที่เหลืออาจเป็น "model_650000.pt" หรือ "model/xxx.pt"
+        rest = "/".join(parts[2:])  # ส่วนที่เหลืออาจเป็น "model_650000_FP16.pt" หรือ "model/model_700000.pt"
 
         # ถ้า rest ไม่ขึ้นต้นด้วย 'model/' ให้เติมอัตโนมัติ
         if rest.endswith(".pt") and not rest.startswith("model/"):
@@ -172,16 +201,15 @@ class F5TTS_Advance:
         # ── 5. ดาวน์โหลดโมเดล .pt ไปเก็บในโฟลเดอร์ model/ ภายใต้ base_path ────────
         mdir = os.path.join(Install.base_path, "model")
         os.makedirs(mdir, exist_ok=True)
-        local_model_path = os.path.join(mdir, os.path.basename(relpath))
+        filename = os.path.basename(relpath)
+        local_model_path = os.path.join(mdir, filename)
 
         if not os.path.exists(local_model_path):
+            # 5.1 สร้าง URL สำหรับดาวน์โหลดจาก Hugging Face
+            url = hf_hub_url(repo_id=repo_id, filename=relpath)
+            # 5.2 ดาวน์โหลดด้วย requests + tqdm
             try:
-                local_model_path = hf_hub_download(
-                    repo_id=repo_id,
-                    filename=relpath,
-                    cache_dir=mdir,
-                    local_dir=mdir,
-                )
+                download_with_progress(url, local_model_path)
             except Exception as e:
                 raise RuntimeError(f"❌ ไม่สามารถดาวน์โหลดโมเดลจาก {repo_id}/{relpath} ได้: {e}")
 
@@ -192,12 +220,8 @@ class F5TTS_Advance:
 
         if not os.path.exists(vocab_path):
             try:
-                hf_hub_download(
-                    repo_id=repo_id,
-                    filename="vocab.txt",
-                    cache_dir=vdir,
-                    local_dir=vdir,
-                )
+                vocab_url = hf_hub_url(repo_id=repo_id, filename="vocab.txt")
+                download_with_progress(vocab_url, vocab_path)
             except Exception as e:
                 raise RuntimeError(f"❌ ไม่สามารถดาวน์โหลด vocab.txt จาก {repo_id} ได้: {e}")
 
