@@ -52,7 +52,7 @@ class FairyTaleNarratorSwitcher:
         api = HfApi()
         model_choices = []
 
-        # ดึงชื่อไฟล์ .pt จาก "model/" ทุกรีโปใน WATCHED_REPOS
+        # ดึงชื่อไฟล์ .pt จาก "model/" ทุกรีโปใน WATCHED_REPOS เพื่อแสดงใน description
         for repo in WATCHED_REPOS:
             try:
                 files = api.list_repo_files(repo_id=repo)
@@ -63,21 +63,31 @@ class FairyTaleNarratorSwitcher:
                     model_choices.append(f"{repo}/{fn}")
 
         model_choices = sorted(model_choices)
-        default_choice = model_choices[-1] if model_choices else ""
 
-        # สร้าง dropdown + free-form ให้กรอก <repo_id>/model/<filename>.pt
+        # กำหนด default ให้เป็น model/model_700000.pt ของ VIZINTZOR
+        default_choice = "VIZINTZOR/F5-TTS-THAI/model/model_700000.pt"
+        if default_choice not in model_choices and model_choices:
+            # ถ้าใน suggested มีชื่ออื่นเป็นตัวสุดท้าย ให้ใช้ชื่อนั้น
+            default_choice = model_choices[-1]
+
+        # สร้าง description รวมตัวอย่างที่ดึงมา
+        description_text = (
+            "พิมพ์ <namespace>/<repo_name>/model/<filename>.pt หรือ\n"
+            "<namespace>/<repo_name>/<filename>.pt เช่น:\n"
+            "  VIZINTZOR/F5-TTS-THAI/model/model_700000.pt\n"
+            "  Muscari/F5-TTS-TH_Finetuned/model_62400.pt\n\n"
+        )
+        if model_choices:
+            description_text += "หรือเลือกดูตัวอย่างด้านล่าง (copy ไปวางในช่อง text):\n" + "\n".join(model_choices)
+
         required = {
             "text": ("STRING", {"multiline": True}),
             "sample_audio_narator": ("AUDIO",),
             "sample_text_narator": ("STRING", {"default": ""}),
-            "model_path": (model_choices, {
+            # เปลี่ยนจาก (model_choices, {...}) เป็น ("STRING", {...})
+            "model_path": ("STRING", {
                 "default": default_choice,
-                "description": (
-                    "พิมพ์ <namespace>/<repo_name>/model/<filename>.pt เช่น\n"
-                    "VIZINTZOR/F5-TTS-THAI/model/model_650000.pt\n\n"
-                    "หรือเลือกจากรายการ suggested ด้านล่าง:\n" +
-                    "\n".join(model_choices)
-                )
+                "description": description_text
             }),
             "seed": ("INT", {"default": -1, "min": -1}),
         }
@@ -96,6 +106,7 @@ class FairyTaleNarratorSwitcher:
             "fix_duration":        ("FLOAT", {"default": 0.0,  "min": 0.0, "max": 30.0, "step": 0.1}),
             "max_chars":           ("INT",   {"default": 250,  "min": 1,   "max": 1000})
         })
+
         return {"required": required, "optional": optional}
 
     RETURN_TYPES = ("AUDIO", "STRING")
