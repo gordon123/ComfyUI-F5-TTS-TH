@@ -6,26 +6,83 @@ except ImportError:
     torch_imported = False
 
 from .F5TTS_Advance import F5TTS_Advance
+from huggingface_hub import HfApi, hf_hub_url
+import os
+import tempfile
+import torch
+import torchaudio
+import soundfile as sf
+from omegaconf import OmegaConf
+import comfy
+from .Install import Install
+import requests
+from tqdm.auto import tqdm
+
+# Ensure the submodule is initialized
+Install.check_install()
+
+def download_with_progress(url: str, local_path: str):
+    response = requests.get(url, stream=True)
+    response.raise_for_status()
+    total_bytes = int(response.headers.get("content-length", 0))
+    chunk_size = 8192
+
+    with tqdm(
+        total=total_bytes,
+        unit="iB",
+        unit_scale=True,
+        desc=os.path.basename(local_path),
+        leave=False,
+    ) as t:
+        with open(local_path, "wb") as f:
+            for chunk in response.iter_content(chunk_size=chunk_size):
+                if chunk:
+                    f.write(chunk)
+                    t.update(len(chunk))
+
 
 class FairyTaleNarratorSwitcher:
     @classmethod
     def INPUT_TYPES(cls):
-        model_choices = [
-            "model_250000.pt", "model_250000_FP16.pt",
-            "model_475000.pt", "model_475000_FP16.pt",
-            "model_500000.pt", "model_500000_FP16.pt",
-            "model_600000.pt", "model_600000_FP16.pt",
-            "model_650000.pt", "model_650000_FP16.pt"
+        # รายการรีโปที่เราจะเฝ้าดู (เหมือน F5TTS_Advance)
+        WATCHED_REPOS = [
+            "VIZINTZOR/F5-TTS-THAI",
+            "Muscari/F5-TTS-TH_Finetuned",
         ]
+        api = HfApi()
+        model_choices = []
+
+        # ดึงชื่อไฟล์ .pt จาก "model/" ทุกรีโปใน WATCHED_REPOS
+        for repo in WATCHED_REPOS:
+            try:
+                files = api.list_repo_files(repo_id=repo)
+            except Exception:
+                continue
+            for fn in files:
+                if fn.startswith("model/") and fn.endswith(".pt"):
+                    model_choices.append(f"{repo}/{fn}")
+
+        model_choices = sorted(model_choices)
+        default_choice = model_choices[-1] if model_choices else ""
+
+        # สร้าง dropdown + free-form ให้กรอก <repo_id>/model/<filename>.pt
         required = {
             "text": ("STRING", {"multiline": True}),
             "sample_audio_narator": ("AUDIO",),
             "sample_text_narator": ("STRING", {"default": ""}),
-            "model_name": (model_choices, {"default": "model_650000.pt"}),
+            "model_path": (model_choices, {
+                "default": default_choice,
+                "description": (
+                    "พิมพ์ <namespace>/<repo_name>/model/<filename>.pt เช่น\n"
+                    "VIZINTZOR/F5-TTS-THAI/model/model_650000.pt\n\n"
+                    "หรือเลือกจากรายการ suggested ด้านล่าง:\n" +
+                    "\n".join(model_choices)
+                )
+            }),
             "seed": ("INT", {"default": -1, "min": -1}),
         }
         optional = {}
-        for i in range(1,6):
+        for i in range(1, 6):
             optional[f"char_name_{i}"]   = ("STRING", {"default": f"Character{i}"})
             optional[f"sample_audio_{i}"] = ("AUDIO",)
             optional[f"sample_text_{i}"]  = ("STRING", {"default": ""})
@@ -47,7 +104,7 @@ class FairyTaleNarratorSwitcher:
     CATEGORY = "🇹🇭 Thai TTS"
 
     def run(self, text, sample_audio_narator, sample_text_narator,
-            model_name="model_650000.pt", seed=-1, *args, **kwargs):
+            model_path="", seed=-1, *args, **kwargs):
 
         def parse_line(line):
             if line.startswith('['):
@@ -67,35 +124,33 @@ class FairyTaleNarratorSwitcher:
             if name and aud is not None:
                 refs[name] = (aud, txt)
 
-        # Split text into segments and map speakers robustly
+        # Split text into segments per line and map speaker tags
         segments = []
         for raw in text.splitlines():
             line = raw.strip()
             if not line:
                 continue
             spk, utt = parse_line(line)
-            # Default to narrator
             speaker_key = "narator"
             if spk is not None:
-                # Clean tag, remove trailing punctuation and spaces
                 spk_clean = spk.strip().rstrip('：:').strip()
-                # Case-insensitive name match
                 for key in refs.keys():
                     if key.strip().lower() == spk_clean.lower():
                         speaker_key = key
                         break
             segments.append((speaker_key, utt))
 
-        # Prepare parameters for F5TTS
-        f5_params = {k: kwargs[k] for k in [
-            "remove_silence", "speed", "cross_fade_duration",
-            "nfe_step", "cfg_strength", "sway_sampling_coef",
-            "fix_duration", "max_chars"
-        ] if k in kwargs}
-        f5_params["model_name"] = model_name
+        # เตรียมพารามิเตอร์สำหรับ F5TTS
+        f5_params = {}
+        for k in ["remove_silence", "speed", "cross_fade_duration",
+                  "nfe_step", "cfg_strength", "sway_sampling_coef",
+                  "fix_duration", "max_chars"]:
+            if k in kwargs:
+                f5_params[k] = kwargs[k]
+        f5_params["model_path"] = model_path
         f5_params["seed"]       = seed
 
-        # Synthesize each segment
+        # สร้างเสียงทีละเซกเมนต์
         tts = F5TTS_Advance()
         audio_chunks = []
         sr_out = None
@@ -111,7 +166,7 @@ class FairyTaleNarratorSwitcher:
             audio_chunks.append(wav)
             out_meta.append({"speaker": spk_key, "text": utt})
 
-        # Concatenate or return single
+        # ถ้ามีหลาย chunk ให้ concat (ถ้า chunk เดียวก็ return เดิม)
         if torch_imported and len(audio_chunks) > 1:
             full = torch.cat(audio_chunks, dim=1)
         else:
