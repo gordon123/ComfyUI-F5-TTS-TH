@@ -226,6 +226,8 @@ https://huggingface.co/spaces/hf-audio/whisper-large-v3
 เวลา install custom node ใหม่ เช็คดูว่า มี import failed ไหม แบบในตัวอย่าง และ เออเร่อ log มันจะแจ้ง ในวงกลม สีน้ำเงิน <br>
 ในตัวอย่างนี้ คือเครื่องเรายังไม่ได้ลง package ```nltk```  วิธีแก้คือลง package ตามด้วยชื่อที่มันแจ้ง เช่น ```pip install nltk``` <br>
 
+error เกี่ยวกับ TensorFlow/Transformers import failed ให้ 
+```pip install protobuf==3.20.3```
 
 ---
 > “หยอดพารามิเตอร์ดั่งร่ายมนตร์  
