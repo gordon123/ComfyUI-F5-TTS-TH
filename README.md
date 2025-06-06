@@ -19,11 +19,12 @@
 [มะนาว] "แล้วฉันล่ะ...ฉันมีหัวใจที่อยากรู้จักทุกชีวิตในป่านี้เลยนะ"
 ```
 
-### วิธีการ ดาวโหลด โมเดล
-ให้ไปที่ https://huggingface.co/VIZINTZOR/F5-TTS-THAI/tree/main หรือ https://huggingface.co/VIZINTZOR/F5-TTS-THAI/tree/main/model
+
 
 ### Muti-Speaker - (1st-June-2025)
 <img width="720" alt="add new model" src="img/F5-TTS-Advance.png" />
+### วิธีการ ดาวโหลด โมเดล
+ให้ไปที่ https://huggingface.co/VIZINTZOR/F5-TTS-THAI/tree/main หรือ https://huggingface.co/VIZINTZOR/F5-TTS-THAI/tree/main/model <br>
 
 สำหรับ 🎤 F5-TTS-Advance TH 🇹🇭 node นี้ ให้ 
 ใส่ ```VIZINTZOR/F5-TTS-THAI/model/model_700000.pt ``` หรือ ถ้าอยู่ใน root ของ Huginface ```VIZINTZOR/F5-TTS-THAI/model_650000_FP16.pt``` วางในช่อง model_path
