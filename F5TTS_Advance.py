@@ -1,4 +1,4 @@
-# F5TTS_Advance.py
+# F5TTS_Advance.py (patched infer_process call)
 
 import os
 import sys
@@ -32,6 +32,7 @@ from f5_tts.cleantext.th_repeat import process_thai_repeat
 
 sys.path.pop(0)
 
+
 def download_with_progress(url: str, local_path: str):
     response = requests.get(url, stream=True)
     response.raise_for_status()
@@ -50,6 +51,7 @@ def download_with_progress(url: str, local_path: str):
                 if chunk:
                     f.write(chunk)
                     t.update(len(chunk))
+
 
 class F5TTS_Advance:
     WATCHED_REPOS = ["VIZINTZOR/F5-TTS-THAI", "Muscari/F5-TTS-TH_Finetuned"]
@@ -195,27 +197,24 @@ class F5TTS_Advance:
         fd = None if fix_duration == 0.0 else fix_duration
 
         try:
-            result = next(
-                infer_process(
-                    ref_audio,
-                    ref_text,
-                    cleaned,
-                    model,
-                    vocoder=vocoder,
-                    speed=speed,
-                    cross_fade_duration=cross_fade_duration,
-                    nfe_step=nfe_step,
-                    cfg_strength=cfg_strength,
-                    sway_sampling_coef=sway_sampling_coef,
-                    fix_duration=fd,
-                    set_max_chars=max_chars,
-                    mel_spec_type="vocos",
-                    device=device,
-                )
+            audio_np, sr_out, _ = infer_process(
+                ref_audio,
+                ref_text,
+                cleaned,
+                model,
+                vocoder=vocoder,
+                speed=speed,
+                cross_fade_duration=cross_fade_duration,
+                nfe_step=nfe_step,
+                cfg_strength=cfg_strength,
+                sway_sampling_coef=sway_sampling_coef,
+                fix_duration=fd,
+                set_max_chars=max_chars,
+                mel_spec_type="vocos",
+                device=device,
             )
-            audio_np, sr_out, _ = result
-        except StopIteration:
-            raise RuntimeError("⚠️ infer_process ไม่ได้สร้าง output ใด ๆ — อาจเกิดจาก model path ผิดหรือไฟล์โมเดลเสียหาย")
+        except Exception as e:
+            raise RuntimeError(f"🔥 พบข้อผิดพลาดจาก infer_process: {e}")
 
         audio_tensor = torch.from_numpy(audio_np)
         if audio_tensor.ndim == 1:
