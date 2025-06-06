@@ -70,7 +70,7 @@ _เสียงไทยที่เท่จนต้องเบิ้ลห�
 
 ### 1. Clone Node
 ```bash
-cd ComfyUI/custom_nodes/
+cd /workspace/ComfyUI/custom_nodes/
 git clone https://github.com/gordon123/ComfyUI-F5-TTS-TH.git
 ```
 
