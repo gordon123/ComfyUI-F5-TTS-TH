@@ -23,6 +23,7 @@
 
 ### Muti-Speaker - (1st-June-2025)
 <img width="720" alt="add new model" src="img/F5-TTS-Advance.png" />
+
 ### วิธีการ ดาวโหลด โมเดล
 ให้ไปที่ https://huggingface.co/VIZINTZOR/F5-TTS-THAI/tree/main หรือ https://huggingface.co/VIZINTZOR/F5-TTS-THAI/tree/main/model <br>
 
