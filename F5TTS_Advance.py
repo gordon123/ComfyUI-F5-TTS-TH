@@ -195,8 +195,7 @@ class F5TTS_Advance:
         fd = None if fix_duration == 0.0 else fix_duration
 
         try:
-            result = next(
-                infer_process(
+            result = infer_process(
                     ref_audio,
                     ref_text,
                     cleaned,
@@ -212,7 +211,7 @@ class F5TTS_Advance:
                     mel_spec_type="vocos",
                     device=device,
                 )
-            )
+            
             if result is None or result[0] is None:
                 raise RuntimeError("❌ infer_process คืนค่า None หรือไม่สามารถ generate เสียงได้")
             audio_np, sr_out, _ = result
