@@ -1,3 +1,5 @@
+# F5TTS_Advance.py
+
 import os
 import sys
 import tempfile
@@ -11,10 +13,10 @@ from huggingface_hub import HfApi, hf_hub_url
 import requests
 from tqdm.auto import tqdm
 
-# Ensure the submodule is initialized
+# Ensure the F5TTS-on-Pod submodule is initialized
 Install.check_install()
 
-# ----- Import English-to-Thai transliteration (local file) -----
+# ----- Import English→Thai transliteration (local file) -----
 from .ARPABET2ThaiScript import eng_to_thai_translit
 
 # ----- Add F5-TTS source path for imports -----
@@ -33,13 +35,13 @@ from f5_tts.infer.utils_infer import (
 from f5_tts.cleantext.number_tha import replace_numbers_with_thai
 from f5_tts.cleantext.th_repeat import process_thai_repeat
 
-# Clean up path
+# Clean up path insertion
 sys.path.pop(0)
 
 
 def download_with_progress(url: str, local_path: str):
     """
-    ดาวน์โหลดไฟล์จาก URL แล้วแสดง progress bar ด้วย tqdm
+    Download a file from `url` with a tqdm progress bar.
     """
     response = requests.get(url, stream=True)
     response.raise_for_status()
@@ -62,10 +64,11 @@ def download_with_progress(url: str, local_path: str):
 
 class F5TTS_Advance:
     """
-    โค้ดนี้ปรับให้:
-    1. ผู้ใช้พิมพ์ <repo_id>/model/<filename>.pt หรือ <repo_id>/<filename>.pt ได้เอง
-    2. เมื่อดาวน์โหลดโมเดล จะพยายามดาวน์โหลด vocab.txt เสมอจาก repo_id นั้น
-       ซึ่งแก้ปัญหาขนาด embedding mismatch ของโมเดล fine-tuned
+    This node does three things:
+    1. Allows the user to type `<repo_id>/model/<filename>.pt` or `<repo_id>/<filename>.pt`
+       instead of a fixed dropdown.
+    2. Always re-downloads `vocab.txt` from that same `repo_id` (avoiding embedding mismatches for fine-tuned models).
+    3. Splits the input text by newline first; within each line, chunks by `max_chars` if needed.
     """
 
     WATCHED_REPOS = [
@@ -78,7 +81,7 @@ class F5TTS_Advance:
         api = HfApi()
         model_suggestions = []
 
-        # ดึงชื่อไฟล์ .pt จาก "model/" ในทุกรีโปที่กำหนด
+        # Gather all .pt filenames under "model/" in each repo
         for repo in cls.WATCHED_REPOS:
             try:
                 files = api.list_repo_files(repo_id=repo)
@@ -95,8 +98,8 @@ class F5TTS_Advance:
         description_text = (
             "พิมพ์ <namespace>/<repo_name>/model/<filename>.pt หรือ\n"
             "<namespace>/<repo_name>/<filename>.pt เช่น:\n"
-            "VIZINTZOR/F5-TTS-THAI/model/model_700000.pt\n"
-            "หรือ Muscari/F5-TTS-TH_Finetuned/model_62400.pt\n\n"
+            "  VIZINTZOR/F5-TTS-THAI/model/model_700000.pt\n"
+            "  Muscari/F5-TTS-TH_Finetuned/model_62400.pt\n\n"
         )
         if model_suggestions:
             description_text += "หรือเลือกใช้ตัวอย่างด้านล่าง:\n" + "\n".join(model_suggestions)
@@ -106,10 +109,13 @@ class F5TTS_Advance:
                 "sample_audio": ("AUDIO",),
                 "sample_text": ("STRING", {"default": "Text of sample_audio"}),
                 "text": ("STRING", {"multiline": True, "default": "สวัสดีครับ"}),
-                "model_path": ("STRING", {
-                    "default": default_choice,
-                    "description": description_text
-                }),
+                "model_path": (
+                    "STRING",
+                    {
+                        "default": default_choice,
+                        "description": description_text,
+                    },
+                ),
                 "seed": ("INT", {"default": -1, "min": -1}),
             },
             "optional": {
@@ -134,18 +140,18 @@ class F5TTS_Advance:
         sample_audio,
         sample_text,
         text,
-        model_path="",  # รูปแบบ <repo_id>/model/<filename>.pt หรือ <repo_id>/<filename>.pt
-        seed=-1,
-        remove_silence=True,
-        speed=1.0,
-        cross_fade_duration=0.15,
-        nfe_step=32,
-        cfg_strength=2.0,
-        sway_sampling_coef=-1.0,
-        fix_duration=0.0,
-        max_chars=250,
+        model_path: str = "",  # either <repo_id>/model/<filename>.pt or <repo_id>/<filename>.pt
+        seed: int = -1,
+        remove_silence: bool = True,
+        speed: float = 1.0,
+        cross_fade_duration: float = 0.15,
+        nfe_step: int = 32,
+        cfg_strength: float = 2.0,
+        sway_sampling_coef: float = -1.0,
+        fix_duration: float = 0.0,
+        max_chars: int = 250,
     ):
-        # 1. Transliterate + Clean
+        # 1. Transliterate + clean entire block of text
         translit = eng_to_thai_translit(text)
         cleaned = process_thai_repeat(replace_numbers_with_thai(translit))
 
@@ -165,9 +171,9 @@ class F5TTS_Advance:
         # 3. Load model config
         cfg_dir = os.path.join(Install.base_path, "src", "f5_tts", "configs")
         for fn in ["F5TTS_Base.yaml", "F5TTS_Base_train.yaml"]:
-            p = os.path.join(cfg_dir, fn)
-            if os.path.exists(p):
-                model_cfg = OmegaConf.load(p).model.arch
+            cfg_p = os.path.join(cfg_dir, fn)
+            if os.path.exists(cfg_p):
+                model_cfg = OmegaConf.load(cfg_p).model.arch
                 break
         else:
             raise FileNotFoundError("Config file not found")
@@ -180,13 +186,11 @@ class F5TTS_Advance:
                 "หรือ <namespace>/<repo_name>/<filename>.pt"
             )
         repo_id = f"{parts[0]}/{parts[1]}"
-        rest = "/".join(parts[2:])  # อาจเป็น "model_62400.pt" หรือ "model/model_62400.pt"
+        rest = "/".join(parts[2:])  # maybe "model_62400.pt" or "model/model_62400.pt"
         filename = os.path.basename(rest)
 
-        # 5. เลือกโฟลเดอร์เก็บโมเดล: submodule หรือ fallback
-        submod_model_dir = os.path.join(
-            Install.base_path, "submodules", "F5TTS-on-Pod", "model", "model"
-        )
+        # 5. Decide where to store: prefer submodule’s `model/model`, fall back to `<base>/model`
+        submod_model_dir = os.path.join(Install.base_path, "submodules", "F5TTS-on-Pod", "model", "model")
         if os.path.isdir(submod_model_dir):
             mdir = submod_model_dir
         else:
@@ -194,15 +198,14 @@ class F5TTS_Advance:
         os.makedirs(mdir, exist_ok=True)
         local_model_path = os.path.join(mdir, filename)
 
-        # 6. ดาวน์โหลดโมเดลถ้ายังไม่มี (ลอง 2 ตำแหน่งก่อน)
+        # 6. Download model if not already present (try “model/<filename>” then “<filename>”)
         if not os.path.exists(local_model_path):
-            # A) ลองจาก “model/<filename>.pt”
             relA = f"model/{filename}"
             urlA = hf_hub_url(repo_id=repo_id, filename=relA)
             try:
                 download_with_progress(urlA, local_model_path)
             except Exception:
-                # B) ถ้า A ล้มเหลว ให้ลองจาก root “<filename>.pt”
+                # fallback to root
                 relB = filename
                 urlB = hf_hub_url(repo_id=repo_id, filename=relB)
                 try:
@@ -210,22 +213,20 @@ class F5TTS_Advance:
                 except Exception as e:
                     raise RuntimeError(f"❌ ไม่สามารถดาวน์โหลดโมเดลจาก {repo_id}/{filename} ได้: {e}")
 
-        # 7. ดาวน์โหลด vocab.txt จาก repo_id เสมอ (ไม่สนว่ามีไฟล์เดิมหรือไม่)
-        #    เก็บชื่อไฟล์เป็น <namespace>_<repo_name>_vocab.txt เพื่อแยกแต่ละ repo
+        # 7. Always (re-)download vocab.txt from the same repo_id, saving it as `<namespace>_<repo_name>_vocab.txt`
         escaped = repo_id.replace("/", "_")
         vdir = os.path.join(Install.base_path, "vocab")
         os.makedirs(vdir, exist_ok=True)
         vocab_filename = f"{escaped}_vocab.txt"
         vocab_path = os.path.join(vdir, vocab_filename)
 
-        # **Always** ดาวน์โหลด vocab.txt จาก repo_id
         try:
             url_vocab = hf_hub_url(repo_id=repo_id, filename="vocab.txt")
             download_with_progress(url_vocab, vocab_path)
         except Exception as e:
             raise RuntimeError(f"❌ ไม่สามารถดาวน์โหลด vocab.txt จาก {repo_id} ได้: {e}")
 
-        # 8. Load model + vocoder
+        # 8. Load the model + vocoder
         model = load_model(DiT, model_cfg, local_model_path, vocab_file=vocab_path, mel_spec_type="vocos")
         vocoder = load_vocoder("vocos")
         device = comfy.model_management.get_torch_device()
@@ -234,13 +235,16 @@ class F5TTS_Advance:
         if seed >= 0:
             torch.manual_seed(seed)
 
-        # 9. fix_duration
+        # 9. fix_duration conversion
         fd = None if fix_duration == 0.0 else fix_duration
 
-        # 10. Inference (ส่ง cleaned เข้า chunk_text ภายใน infer_process)
+        # 10. Inference (send the full `cleaned` text to `infer_process`, which will split by newline + chunk under the hood)
         audio_np, sr_out, _ = infer_process(
-            ref_audio, ref_text, cleaned,
-            model, vocoder=vocoder,
+            ref_audio,
+            ref_text,
+            cleaned,
+            model,
+            vocoder=vocoder,
             speed=speed,
             cross_fade_duration=cross_fade_duration,
             nfe_step=nfe_step,
@@ -249,15 +253,15 @@ class F5TTS_Advance:
             fix_duration=fd,
             set_max_chars=max_chars,
             mel_spec_type="vocos",
-            device=device
+            device=device,
         )
 
-        # 11. แปลงเป็น Tensor
+        # 11. Convert to torch.Tensor
         audio_tensor = torch.from_numpy(audio_np)
         if audio_tensor.ndim == 1:
             audio_tensor = audio_tensor.unsqueeze(0)
 
-        # 12. ตัด silence ถ้าต้องการ
+        # 12. Remove silence if requested
         if remove_silence:
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp2:
                 sf.write(tmp2.name, audio_tensor.cpu().numpy().T, sr_out)
