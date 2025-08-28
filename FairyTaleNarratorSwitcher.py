@@ -68,11 +68,13 @@ class FairyTaleNarratorSwitcher:
 
         model_choices = sorted(model_choices)
 
-        # Default to VIZINTZOR/F5-TTS-THAI/model/model_700000.pt if it exists
-        default_choice = "VIZINTZOR/F5-TTS-THAI/model/model_700000.pt"
-        if default_choice not in model_choices and model_choices:
-            # If our preferred default is not present, pick the last suggestion
-            default_choice = model_choices[-1]
+        # Prefer 1000000 if available
+        if "VIZINTZOR/F5-TTS-THAI/model/model_1000000.pt" in model_choices:
+            default_choice = "VIZINTZOR/F5-TTS-THAI/model/model_1000000.pt"
+        else:
+            default_choice = "VIZINTZOR/F5-TTS-THAI/model/model_700000.pt" if "VIZINTZOR/F5-TTS-THAI/model/model_700000.pt" in model_choices else ""
+            if default_choice == "" and model_choices:
+                default_choice = model_choices[-1]
 
         description_text = (
             "พิมพ์ <namespace>/<repo_name>/model/<filename>.pt หรือ\n"
@@ -156,7 +158,7 @@ class FairyTaleNarratorSwitcher:
             return None, line
 
         # Build reference dictionary: “narator” + up to 5 character references
-        refs: dict[str, tuple] = {"narator": (sample_audio_narator, sample_text_narator)}
+        refs = {"narator": (sample_audio_narator, sample_text_narator)}
         for i in range(1, 6):
             name = kwargs.get(f"char_name_{i}", "").strip()
             aud = kwargs.get(f"sample_audio_{i}")
