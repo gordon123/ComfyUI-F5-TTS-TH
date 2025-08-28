@@ -1,0 +1,411 @@
+{
+  "id": "ef67fae7-50d2-4a84-874e-5b9c828442de",
+  "revision": 0,
+  "last_node_id": 14,
+  "last_link_id": 20,
+  "nodes": [
+    {
+      "id": 5,
+      "type": "LoadAudio",
+      "pos": [
+        261.0094909667969,
+        31.62405014038086
+      ],
+      "size": [
+        270,
+        136
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "AUDIO",
+          "type": "AUDIO",
+          "links": [
+            14
+          ]
+        }
+      ],
+      "title": "เสียง Narator",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.54",
+        "Node name for S&R": "LoadAudio"
+      },
+      "widgets_values": [
+        "dragonbal1.wav",
+        null,
+        null
+      ]
+    },
+    {
+      "id": 8,
+      "type": "LoadAudio",
+      "pos": [
+        246.91360473632812,
+        221.33010864257812
+      ],
+      "size": [
+        270,
+        136
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "AUDIO",
+          "type": "AUDIO",
+          "links": [
+            17
+          ]
+        }
+      ],
+      "title": "เสียง องุ่น",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.54",
+        "Node name for S&R": "LoadAudio"
+      },
+      "widgets_values": [
+        "dragonbal2.wav",
+        null,
+        null
+      ]
+    },
+    {
+      "id": 10,
+      "type": "FairyTaleNarratorSwitcher",
+      "pos": [
+        735.16552734375,
+        32.89754104614258
+      ],
+      "size": [
+        519.5982666015625,
+        1016.27734375
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "sample_audio_narator",
+          "type": "AUDIO",
+          "link": 14
+        },
+        {
+          "name": "sample_audio_1",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": 17
+        },
+        {
+          "name": "sample_audio_2",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": 18
+        },
+        {
+          "name": "sample_audio_3",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": null
+        },
+        {
+          "name": "sample_audio_4",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": null
+        },
+        {
+          "name": "sample_audio_5",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": null
+        },
+        {
+          "name": "remove_silence",
+          "shape": 7,
+          "type": "BOOL",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            15
+          ]
+        },
+        {
+          "name": "text",
+          "type": "STRING",
+          "links": [
+            16
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-F5-TTS-TH",
+        "ver": "dab94c347065b4f3b868bbd567fa702c5dddbdaf",
+        "Node name for S&R": "FairyTaleNarratorSwitcher"
+      },
+      "widgets_values": [
+        "กลีบดาวพาทั้งสองไปยังทุ่งกว้าง ที่มีดอกไม้พูดได้มากมาย\nและเล่าเรื่องราวของโลกเวทมนตร์ให้ฟัง\n\nโลกนี้จะเปิดทางให้เฉพาะผู้กล้าที่มีความเมตตาและความอยากรู้อย่างแท้จริง\n\n[องุ่น] ยิ้มกว้าง \"งั้นฉันผ่านแน่ เพราะฉันกล้า!\"\n\n[มะนาว] \"แล้วฉันล่ะ...ฉันมีหัวใจที่อยากรู้จักทุกชีวิตในป่านี้เลยนะ\"",
+        "อ้า รักษาฟอร์มได้ รู้แล้วเจ้ายังไม่รู้จักฉันดีใช่ไหมนี่ถ้าลงมือจริงแล้วก็จะเป็นการทำรุนแรงกับเด็กเกินไปหน่อยนะ",
+        "VIZINTZOR/F5-TTS-THAI/model/model_1000000.pt",
+        1551,
+        "randomize",
+        "องุ่น",
+        "และแล้วถึงเวลาระทึกใจที่ทุกท่านเฝ้ารองคอยกันมาเป็นเวลานานแสนนาน",
+        "มะนาว",
+        "เขาใช้มือซ้ายปัดหมัดอันว่างวายของคู่ต่อสู้ แล้วใช้มือขวาอัดสอบเข้าไปถึงสามครั้งติดๆ กัน",
+        "Character3",
+        "",
+        "Character4",
+        "",
+        "Character5",
+        "",
+        1,
+        0.15,
+        32,
+        2,
+        -1,
+        0,
+        251
+      ]
+    },
+    {
+      "id": 12,
+      "type": "Note",
+      "pos": [
+        -164.7764129638672,
+        55.1285285949707
+      ],
+      "size": [
+        392.4791259765625,
+        632.4718017578125
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "update 28 Aug \n\nVIZINTZOR/F5-TTS-THAI/model/model_1000000.pt\n\nใช้โมเดลนี้เป็นหลัก\n\n\nดาวโหลด ตัวอย่างเสียงจาก\n\nhttps://github.com/gordon123/ComfyUI-F5-TTS-TH/tree/main/example_workflows\n\n=== การใช้ ===\n\nใช้ไฟลเสียงแบบ Mono 16000kbs ไม่เกิน 15 วิ\n\nตัวอย่างคำพูด ให้เหมือนกับเสียง ใส่ในช่อง sample text\n\n====\n\ndragonbal1.txt\nอ้า รักษาฟอร์มได้ รู้แล้วเจ้ายังไม่รู้จักฉันดีใช่ไหมนี่ถ้าลงมือจริงแล้วก็จะเป็นการทำรุนแรงกับเด็กเกินไปหน่อยนะ\n\n\ndragonbal2.txt\nและแล้วถึงเวลาระทึกใจที่ทุกท่านเฝ้ารองคอยกันมาเป็นเวลานานแสนนาน\n\n\ndragonbal3.txt\nเขาใช้มือซ้ายปัดหมัดอันว่างวายของคู่ต่อสู้ แล้วใช้มือขวาอัดสอบเข้าไปถึงสามครั้งติดๆ กัน\n\n=======\n\nเปลี่ยนชื่อโดยกำกับ เช่น [องุ่น] ใน prompt\nchar_name_x ใส่ชื่อ องุ่น\n"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 11,
+      "type": "LoadAudio",
+      "pos": [
+        251.45574951171875,
+        429.9694519042969
+      ],
+      "size": [
+        270,
+        136
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "AUDIO",
+          "type": "AUDIO",
+          "links": [
+            18
+          ]
+        }
+      ],
+      "title": "เสียงมะนาว",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.54",
+        "Node name for S&R": "LoadAudio"
+      },
+      "widgets_values": [
+        "dragonbal3.wav",
+        null,
+        null
+      ]
+    },
+    {
+      "id": 3,
+      "type": "SaveAudioAndText",
+      "pos": [
+        1277.187255859375,
+        24.318429946899414
+      ],
+      "size": [
+        400,
+        200
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 15
+        },
+        {
+          "name": "text",
+          "type": "STRING",
+          "widget": {
+            "name": "text"
+          },
+          "link": 16
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            19
+          ]
+        },
+        {
+          "name": "filename",
+          "type": "STRING",
+          "links": [
+            20
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-F5-TTS-TH",
+        "ver": "1f4e9c59456af60b0aa93362241b72e3baf0e74e",
+        "Node name for S&R": "SaveAudioAndText"
+      },
+      "widgets_values": [
+        "",
+        "F5TTSTH",
+        "wav"
+      ]
+    },
+    {
+      "id": 14,
+      "type": "VrchAudioSaverNode",
+      "pos": [
+        1758.922119140625,
+        15.014477729797363
+      ],
+      "size": [
+        270,
+        184
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 19
+        },
+        {
+          "name": "filename",
+          "type": "STRING",
+          "widget": {
+            "name": "filename"
+          },
+          "link": 20
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfyui-web-viewer",
+        "ver": "1.1.4",
+        "Node name for S&R": "VrchAudioSaverNode"
+      },
+      "widgets_values": [
+        "web_viewer_audio",
+        "web_viewer",
+        "wav",
+        true
+      ]
+    }
+  ],
+  "links": [
+    [
+      14,
+      5,
+      0,
+      10,
+      0,
+      "AUDIO"
+    ],
+    [
+      15,
+      10,
+      0,
+      3,
+      0,
+      "AUDIO"
+    ],
+    [
+      16,
+      10,
+      1,
+      3,
+      1,
+      "STRING"
+    ],
+    [
+      17,
+      8,
+      0,
+      10,
+      1,
+      "AUDIO"
+    ],
+    [
+      18,
+      11,
+      0,
+      10,
+      2,
+      "AUDIO"
+    ],
+    [
+      19,
+      3,
+      0,
+      14,
+      0,
+      "AUDIO"
+    ],
+    [
+      20,
+      3,
+      1,
+      14,
+      1,
+      "STRING"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.5221123078837847,
+      "offset": [
+        402.9160146995184,
+        253.81663260016103
+      ]
+    },
+    "frontendVersion": "1.25.11"
+  },
+  "version": 0.4
+}
