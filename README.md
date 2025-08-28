@@ -71,12 +71,12 @@ _เสียงไทยที่เท่จนต้องเบิ้ลห�
 
 ## Core PyTorch + Audio backend เลือก ให้ตรงกับ Pod ที่ตัวเองใช้ ตัวไดตัวหนึ่ง
 
-### 🔥 Python 3.11 CUDA 12.8 
+### 🔥 Python 3.11 / CUDA 12.8 (ComfyUI Nodes ใหม่ อาจจะต้องลงเวอชั่นนี้)
 
-### 🛠️ Python 3.10 / CUDA 11.8 (GPU รุ่นเก่า หรือถ้าคุณใช้ cu118)
+### 🛠️ Python 3.10 / CUDA 11.8 (F5-TTS ต้นตำหรับ แนะนำเวอชั่นนี้)
 
 ### 1. Clone Node
-```bash
+```
 cd /workspace/ComfyUI/custom_nodes/
 git clone https://github.com/gordon123/ComfyUI-F5-TTS-TH.git
 ```
@@ -87,7 +87,6 @@ git clone https://github.com/gordon123/ComfyUI-F5-TTS-TH.git
 
 ```
 cd ComfyUI-F5-TTS-TH
-
 git submodule update --init --recursive
 ```
 
