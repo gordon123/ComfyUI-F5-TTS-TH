@@ -8,7 +8,7 @@ class Install:
     base_path = os.path.join(os.path.dirname(__file__), "submodules", "F5TTS-on-Pod")
     model_dir = os.path.join(base_path, "ckpts", "thai")
     vocab_dir = os.path.join(base_path, "vocab")
-    default_model = "model_500000_FP16.pt"
+    default_model = "model_1000000.pt"
     model_url_base = "https://huggingface.co/VIZINTZOR/F5-TTS-THAI/resolve/main"
 
     @staticmethod
@@ -29,7 +29,7 @@ class Install:
     def install_submodule():
         print("🔧 Initializing F5TTS-on-Pod submodule...")
         try:
-            import pygit2
+            import pygit2  # type: ignore
             repo = pygit2.Repository(os.path.dirname(__file__))
             pygit2.submodules.SubmoduleCollection(repo).update(init=True)
         except Exception as e:
