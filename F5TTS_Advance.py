@@ -68,7 +68,14 @@ class F5TTS_Advance:
                     model_suggestions.append(f"{repo}/{fn}")
 
         model_suggestions = sorted(model_suggestions)
-        default_choice = model_suggestions[-1] if model_suggestions else ""
+        default_choice = ""
+        if model_suggestions:
+            preferred = None
+            for m in model_suggestions:
+                if m.endswith("model_1000000.pt"):
+                    preferred = m
+                    break
+            default_choice = preferred if preferred is not None else model_suggestions[-1]
 
         description_text = (
             "พิมพ์ <namespace>/<repo_name>/model/<filename>.pt หรือ\n"
