@@ -101,6 +101,7 @@ source venv/bin/activate
 ```
 apt-get update && apt-get install -y ffmpeg libsndfile1 git
 ```
+สำหรับ Wondows ดูการลง ffmpeg ตามนี้ https://tinyurl.com/installffmpeg1
 
 ### 5. ติดตั้ง dependencies 
 
