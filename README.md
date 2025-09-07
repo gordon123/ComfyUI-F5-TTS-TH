@@ -97,7 +97,7 @@ python -m venv venv
 source venv/bin/activate
 ```
 
-### 4. ติดตั้ง Package สำหรับรองรับการใช้งานเสียง
+### 4. ติดตั้ง Package สำหรับรองรับการใช้งานเสียง ( code นี้สำหรับ linux,runpod)
 ```
 apt-get update && apt-get install -y ffmpeg libsndfile1 git
 ```
