@@ -122,7 +122,32 @@ pip install "numpy<2" "soxr==0.5.0.post1" "librosa==0.11.0" "numba==0.58.1" "llv
 
 ตามด้วย
 ```
-pip install -r requirements.txt --no-deps
+pip install -r requirements.txt
+python -m nltk.downloader punkt cmudict averaged_perceptron_tagger wordnet omw-1.4
+```
+
+### run comfyui ถ้า imported Custom node failed!! ลอง install พวกนี้ ถ้า ยังมี module not found, โยน error ตอน Restart Comfyui ให้ chatGPT
+```
+pip install -U wheel
+pip install "antlr4-python3-runtime==4.9.3"
+pip install -U "sentry-sdk>=2.0.0"
+pip install -U pip
+pip install -U antlr4-python3-runtime==4.9.3
+pip install -U nltk==3.9.1
+pip install -U sentry-sdk>=2.0.0
+pip install -U wheel
+pip install distance>=0.1.3 inflect>=0.3.1
+python -m nltk.downloader punkt cmudict averaged_perceptron_tagger wordnet omw-1.4
+pip install -U loguru distance inflect
+pip install -U "einx>=0.3.0" "einops>=0.6.0" "beartype>=0.18" "rotary-embedding-torch>=0.5.3"
+pip install -U "pandas==2.2.3" "pyarrow>=14" fsspec xxhash dill multiprocess aiohttp
+```
+
+### run comfyui
+```
+cd /workspace/ComfyUI
+pkill -f "python main.py" || true
+python main.py --listen
 ```
 ---
 
