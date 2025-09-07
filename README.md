@@ -90,7 +90,7 @@ cd ComfyUI-F5-TTS-TH
 git submodule update --init --recursive
 ```
 
-### 3. สร้าง virtual venv หรือ ใช้ conda ก็เหมือนกัน
+### 3. สร้าง virtual venv หรือ ใช้ conda ก็เหมือนกัน (ใคร activate venv แล้ว ข้ามไป)
 ```
 python -m venv venv
 
