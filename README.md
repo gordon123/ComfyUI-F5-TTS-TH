@@ -141,6 +141,8 @@ python -m nltk.downloader punkt cmudict averaged_perceptron_tagger wordnet omw-1
 pip install -U loguru distance inflect
 pip install -U "einx>=0.3.0" "einops>=0.6.0" "beartype>=0.18" "rotary-embedding-torch>=0.5.3"
 pip install -U "pandas==2.2.3" "pyarrow>=14" fsspec xxhash dill multiprocess aiohttp
+pip install -U pyparsing cycler kiwisolver contourpy fonttools
+pip install -U "encodec==0.1.1"
 ```
 
 ### run comfyui
