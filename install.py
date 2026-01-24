@@ -5,11 +5,19 @@ import urllib.request
 import shutil
 import zipfile
 
+# ✅ เพิ่มตรงนี้ (หลัง import / ก่อน hf_hub_download ก็ได้)
+# If HF_HUB_ENABLE_HF_TRANSFER=1 but hf_transfer isn't installed, disable it to avoid warnings
+if os.environ.get("HF_HUB_ENABLE_HF_TRANSFER") == "1":
+    try:
+        import hf_transfer  # noqa: F401
+    except ImportError:
+        os.environ.pop("HF_HUB_ENABLE_HF_TRANSFER", None)
+
 try:
     from huggingface_hub import hf_hub_download  # type: ignore
 except Exception:
     hf_hub_download = None
-
+    
 class Install:
     # ชี้ไปที่โฟลเดอร์ submodule ใหม่เสมอ
     base_path = os.path.join(os.path.dirname(__file__), "submodules", "F5TTS-on-Pod")
