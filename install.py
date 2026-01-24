@@ -4,7 +4,7 @@ import os
 import urllib.request
 
 try:
-    from huggingface_hub import hf_hub_download
+    from huggingface_hub import hf_hub_download  # type: ignore
 except Exception:
     hf_hub_download = None
 
@@ -54,19 +54,9 @@ class Install:
 
     @staticmethod
     def install_requirements():
-        print("📦 Installing dependencies for F5TTS-on-Pod...")
-        # ติดตั้ง repo เป็น package
-        subprocess.run([
-            sys.executable, "-m", "pip", "install",
-            "git+https://github.com/VYNCX/F5-TTS-THAI.git"
-        ], check=True)
-
-        # ติดตั้ง PyTorch และ Torchaudio
-        subprocess.run([
-            sys.executable, "-m", "pip", "install",
-            "torch==2.1.2+cu126", "torchaudio==2.1.2+cu126",
-            "--index-url", "https://download.pytorch.org/whl/cu126"
-        ], check=True)
+        # Install the submodule package in editable mode, as required by the static contract
+        print("🎯 Installing F5TTS-on-Pod submodule in editable mode...")
+        subprocess.run([sys.executable, "-m", "pip", "install", "-e", Install.base_path], check=True)
 
     @staticmethod
     def ensure_model_dir():
@@ -125,3 +115,6 @@ class Install:
     def has_model_file():
         model_path = os.path.join(Install.model_dir, Install.default_model)
         return os.path.exists(model_path)
+
+if __name__ == "__main__":
+    Install.check_install()

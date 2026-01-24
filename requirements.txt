@@ -10,7 +10,7 @@ pydub==0.25.1
 g2p_en==2.1.0
 jieba==0.42.1
 pypinyin==0.55.0
-transformers==4.56.1
+transformers>=4.56.0,<4.60.0
 datasets==4.0.0
 tqdm==4.67.1
 numpy==1.26.4
@@ -50,5 +50,5 @@ fonttools>=4.53.0
 # ===== Dev & Analytics =====
 wandb==0.21.3
 sentry-sdk>=2.0.0
-huggingface_hub>=0.15.0
+huggingface_hub>=0.34.0,<1.0
 wheel>=0.40.0
