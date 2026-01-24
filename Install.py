@@ -3,6 +3,11 @@ import sys
 import os
 import urllib.request
 
+try:
+    from huggingface_hub import hf_hub_download
+except Exception:
+    hf_hub_download = None
+
 class Install:
     # ชี้ไปที่โฟลเดอร์ submodule ใหม่เสมอ
     base_path = os.path.join(os.path.dirname(__file__), "submodules", "F5TTS-on-Pod")
@@ -76,6 +81,16 @@ class Install:
         vocab_src = os.path.join(Install.vocab_dir, "vocab.txt")
         if not os.path.exists(vocab_src):
             print("⬇️ Downloading vocab.txt...")
+            if hf_hub_download is not None:
+                try:
+                    hf_hub_download(repo_id="VIZINTZOR/F5-TTS-THAI",
+                                    filename="vocab.txt",
+                                    local_dir=Install.vocab_dir,
+                                    local_filename="vocab.txt")
+                    print("✅ vocab.txt downloaded.")
+                    return
+                except Exception as e:
+                    print(f"⚠️ HF download failed: {e}. Falling back to urllib.")
             urllib.request.urlretrieve(
                 f"{Install.model_url_base}/vocab.txt",
                 vocab_src
@@ -87,11 +102,24 @@ class Install:
         model_path = os.path.join(Install.model_dir, Install.default_model)
         if not os.path.exists(model_path):
             print(f"⬇️ Downloading default model: {Install.default_model}...")
-            urllib.request.urlretrieve(
-                f"{Install.model_url_base}/{Install.default_model}",
-                model_path
-            )
-            print(f"✅ Model downloaded: {Install.default_model}")
+            if hf_hub_download is not None:
+                try:
+                    hf_hub_download(repo_id="VIZINTZOR/F5-TTS-THAI",
+                                    filename=Install.default_model,
+                                    local_dir=Install.model_dir,
+                                    local_filename=Install.default_model)
+                    print(f"✅ Model downloaded: {Install.default_model}")
+                    return
+                except Exception as e:
+                    print(f"⚠️ HF download failed: {e}. Falling back to urllib.")
+            try:
+                urllib.request.urlretrieve(
+                    f"{Install.model_url_base}/{Install.default_model}",
+                    model_path
+                )
+                print(f"✅ Model downloaded: {Install.default_model}")
+            except Exception as e:
+                print(f"⚠️ Failed to download default model: {Install.default_model}. Error: {e}")
 
     @staticmethod
     def has_model_file():
