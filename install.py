@@ -2,6 +2,8 @@ import subprocess
 import sys
 import os
 import urllib.request
+import shutil
+import zipfile
 
 try:
     from huggingface_hub import hf_hub_download  # type: ignore
@@ -18,21 +20,28 @@ class Install:
 
     @staticmethod
     def has_submodule_file():
-        # ตรวจสอบว่า submodule ถูก clone มาแล้ว
-        return os.path.exists(os.path.join(Install.base_path, "README.md"))
+        # Validate submodule presence using multiple indicators:
+        return (
+            os.path.exists(os.path.join(Install.base_path, "pyproject.toml")) or
+            os.path.exists(os.path.join(Install.base_path, "setup.py")) or
+            os.path.isdir(os.path.join(Install.base_path, "src", "f5_tts")) or
+            os.path.exists(os.path.join(Install.base_path, "README.md"))
+        )
 
     @staticmethod
     def check_install():
-        Install.ensure_model_dir()
-        Install.ensure_vocab_dir()
         if not Install.has_submodule_file():
             Install.install_submodule()
+
+        Install.ensure_model_dir()
+        Install.ensure_vocab_dir()
         Install.ensure_vocab()
         Install.ensure_default_model()
 
     @staticmethod
     def install_submodule():
         print("🔧 Initializing F5TTS-on-Pod submodule...")
+        # Try modern pygit2 path (optional; do not rely on it for success)
         try:
             import pygit2  # type: ignore
             repo = pygit2.Repository(os.path.dirname(__file__))
@@ -41,14 +50,59 @@ class Install:
             print("ℹ️ pygit2 not available or failed:", e)
             print("⚠️ Falling back to `git submodule update` via subprocess")
 
-        subprocess.run(
-            ["git", "submodule", "update", "--init", "--recursive"],
-            cwd=os.path.dirname(__file__),
-            check=True
-        )
+        need_fallback = False
+        try:
+            subprocess.run(
+                ["git", "submodule", "update", "--init", "--recursive"],
+                cwd=os.path.dirname(__file__),
+                check=True
+            )
+        except Exception as e:
+            print("⚠️ git submodule update failed:", e)
+            need_fallback = True
+
+        # If still missing, attempt fallback methods
+        if not Install.has_submodule_file():
+            need_fallback = True
+
+        if need_fallback:
+            git_path = shutil.which("git")
+            if git_path:
+                print("🔁 Submodule missing or incomplete. Attempting git clone fallback...")
+                try:
+                    # If base_path exists, remove it to ensure a clean clone
+                    if os.path.isdir(Install.base_path) or os.path.exists(Install.base_path):
+                        try:
+                            shutil.rmtree(Install.base_path)
+                            print("🗑️ Existing submodule path removed before clone.")
+                        except Exception as e:
+                            print(f"⚠️ Failed to remove existing submodule path: {e}")
+                    subprocess.run(["git", "clone", "https://github.com/gordon123/F5TTS-on-Pod", Install.base_path], check=True)
+                    subprocess.run(["git", "-C", Install.base_path, "checkout", "f5f5b1c0da3f77063e68a41fcd68c1e2279b2872"], check=True)
+                except Exception as e:
+                    print(f"⚠️ Submodule clone/checkout failed: {e}")
+            else:
+                print("⚠️ git not found. Falling back to ZIP download...")
+                try:
+                    zip_url = "https://github.com/gordon123/F5TTS-on-Pod/archive/f5f5b1c0da3f77063e68a41fcd68c1e2279b2872.zip"
+                    zip_path = os.path.join(os.path.dirname(__file__), "F5TTS-on-Pod-f5f5.zip")
+                    urllib.request.urlretrieve(zip_url, zip_path)
+                    with zipfile.ZipFile(zip_path, 'r') as z:
+                        z.extractall(os.path.dirname(Install.base_path))
+                    extracted_dir = os.path.join(os.path.dirname(Install.base_path), "F5TTS-on-Pod-f5f5b1c0da3f77063e68a41fcd68c1e2279b2872")
+                    if os.path.isdir(extracted_dir):
+                        if not os.path.isdir(Install.base_path):
+                            os.rename(extracted_dir, Install.base_path)
+                    # Clean up temporary ZIP after extraction
+                    try:
+                        os.remove(zip_path)
+                    except Exception:
+                        pass
+                except Exception as e:
+                    print(f"⚠️ ZIP fallback failed: {e}")
 
         if not Install.has_submodule_file():
-            print("❌ Submodule initialization failed. เช็คการตั้งค่า Git อีกทีนะ.")
+            print("❌ Submodule initialization failed. Check Git availability or network.")
         else:
             Install.install_requirements()
 
