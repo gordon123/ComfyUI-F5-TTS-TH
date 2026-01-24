@@ -3,32 +3,36 @@
 import os
 import sys
 import tempfile
-import torch
-import torchaudio
-import soundfile as sf
+try:
+    import torch
+    import torchaudio
+    import soundfile as sf
+except Exception:
+    torch = None
+    torchaudio = None
+    sf = None
 from omegaconf import OmegaConf
 import comfy
-from .Install import Install
+from .install import Install
 from huggingface_hub import HfApi, hf_hub_url
 import requests
 from tqdm.auto import tqdm
 
-Install.check_install()
 from .ARPABET2ThaiScript import eng_to_thai_translit
 
-f5tts_src = os.path.join(Install.base_path, "src")
+f5tts_src = os.path.join(os.path.dirname(__file__), "submodules", "F5TTS-on-Pod", "src")
 sys.path.insert(0, f5tts_src)
 
-from f5_tts.model import DiT
-from f5_tts.infer.utils_infer import (
+from f5_tts.model import DiT  # type: ignore
+from f5_tts.infer.utils_infer import (  # type: ignore
     load_model,
     load_vocoder,
     preprocess_ref_audio_text,
     infer_process,
     remove_silence_for_generated_wav,
 )
-from f5_tts.cleantext.number_tha import replace_numbers_with_thai
-from f5_tts.cleantext.th_repeat import process_thai_repeat
+from f5_tts.cleantext.number_tha import replace_numbers_with_thai  # type: ignore
+from f5_tts.cleantext.th_repeat import process_thai_repeat  # type: ignore
 
 sys.path.pop(0)
 
@@ -158,7 +162,7 @@ class F5TTS_Advance:
         rest = "/".join(parts[2:])
         filename = os.path.basename(rest)
 
-        submod_model_dir = os.path.join(Install.base_path, "submodules", "F5TTS-on-Pod", "model", "model")
+        submod_model_dir = os.path.join(Install.base_path, "model")
         mdir = submod_model_dir if os.path.isdir(submod_model_dir) else os.path.join(Install.base_path, "model")
         os.makedirs(mdir, exist_ok=True)
         local_model_path = os.path.join(mdir, filename)

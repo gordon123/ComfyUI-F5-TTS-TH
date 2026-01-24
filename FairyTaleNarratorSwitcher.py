@@ -13,17 +13,22 @@ from .F5TTS_Advance import F5TTS_Advance
 from huggingface_hub import HfApi, hf_hub_url
 import os
 import tempfile
-import torch
 import torchaudio
 import soundfile as sf
 from omegaconf import OmegaConf
 import comfy
-from .Install import Install
+from .install import Install
 import requests
 from tqdm.auto import tqdm
 
-# Ensure the F5TTS-on-Pod submodule is initialized
-Install.check_install()
+# Lazy install: run installer only when the node is actually used
+_installed = False
+
+def _ensure_install():
+    global _installed
+    if not _installed:
+        Install.check_install()
+        _installed = True
 
 
 def download_with_progress(url: str, local_path: str):
@@ -49,6 +54,7 @@ def download_with_progress(url: str, local_path: str):
 class FairyTaleNarratorSwitcher:
     @classmethod
     def INPUT_TYPES(cls):
+        _ensure_install()
         WATCHED_REPOS = [
             "VIZINTZOR/F5-TTS-THAI",
             "Muscari/F5-TTS-TH_Finetuned",
