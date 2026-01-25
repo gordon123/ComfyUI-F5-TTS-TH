@@ -51,4 +51,5 @@ fonttools>=4.53.0
 wandb==0.21.3
 sentry-sdk>=2.0.0
 huggingface_hub>=0.34.0,<1.0
+hf_transfer
 wheel>=0.40.0
