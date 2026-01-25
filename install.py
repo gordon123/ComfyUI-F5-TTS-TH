@@ -138,7 +138,7 @@ class Install:
                     hf_hub_download(repo_id="VIZINTZOR/F5-TTS-THAI",
                                     filename="vocab.txt",
                                     local_dir=Install.vocab_dir,
-                                    local_filename="vocab.txt")
+                                   )
                     print("✅ vocab.txt downloaded.")
                     return
                 except Exception as e:
@@ -156,10 +156,11 @@ class Install:
             print(f"⬇️ Downloading default model: {Install.default_model}...")
             if hf_hub_download is not None:
                 try:
-                    hf_hub_download(repo_id="VIZINTZOR/F5-TTS-THAI",
+                    hf_hub_download(
+                                    repo_id="VIZINTZOR/F5-TTS-THAI",
                                     filename=Install.default_model,
                                     local_dir=Install.model_dir,
-                                    local_filename=Install.default_model)
+                                    )
                     print(f"✅ Model downloaded: {Install.default_model}")
                     return
                 except Exception as e:
