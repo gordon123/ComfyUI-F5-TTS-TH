@@ -30,6 +30,10 @@ Thai Text-to-Speech (TTS) custom node for **ComfyUI**, powered by **F5-TTS (Thai
 cd ComfyUI/custom_nodes
 git clone https://github.com/gordon123/ComfyUI-F5-TTS-TH.git
 cd ComfyUI-F5-TTS-TH
+
+# ⚠️ สำคัญมาก: ต้อง init submodule
+git submodule update --init --recursive
+# ติดตั้ง dependency
 pip install -r requirements.txt
 ```
 
