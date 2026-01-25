@@ -1,6 +1,13 @@
 # ComfyUI-F5-TTS-TH 🇹🇭
 Thai Text-to-Speech (TTS) custom node for **ComfyUI**, powered by **F5-TTS (Thai)**
 
+## Demo Video วิธี Install และ แนะนำการใช้คร่าวๆ
+
+[![Demo Video](https://img.youtube.com/vi/Hpa2dnaRCmA/hqdefault.jpg)](https://www.youtube.com/watch?v=Hpa2dnaRCmA)
+
+▶️ https://www.youtube.com/watch?v=Hpa2dnaRCmA
+
+
 ---
 
 ## ✨ Features
