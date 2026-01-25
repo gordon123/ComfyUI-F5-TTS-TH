@@ -11,6 +11,18 @@ Thai Text-to-Speech (TTS) custom node for **ComfyUI**, powered by **F5-TTS (Thai
 - มี fallback อัตโนมัติ ปลอดภัยต่อ environment
 
 ---
+### วิธีการ ดาวโหลด โมเดล
+ให้ไปที่ https://huggingface.co/VIZINTZOR/F5-TTS-THAI/tree/main หรือ https://huggingface.co/VIZINTZOR/F5-TTS-THAI/tree/main/model <br>
+
+สำหรับ ช่อง model_path นี้ ให้ ใส่ <br>
+
+```VIZINTZOR/F5-TTS-THAI/model/model_1000000.pt ``` 
+
+หรือกรณีที่ custom node ไม่ดาวโหลดโมเดลให้อัตโนมัติ ให้เราใช้ wget ดาวโหลด ไฟล์โมเดลไปไว้ในนี้ <br>
+```
+cd /workspace/ComfyUI/custom_nodes/ComfyUI-F5-TTS-TH/submodules/F5TTS-on-Pod/model/
+```
+---
 
 ## 🚀 Quick Start (แนะนำที่สุด)
 
