@@ -97,3 +97,9 @@ MIT
 
 ## ❤️ Credits
 F5-TTS / Hugging Face / ComfyUI Community
+
+https://huggingface.co/VIZINTZOR/F5-TTS-THAI
+
+https://github.com/niknah/ComfyUI-F5-TTS
+
+https://github.com/VYNCX/F5-TTS-THAI
