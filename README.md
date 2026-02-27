@@ -58,7 +58,7 @@ pip install -r requirements.txt
 Install ffmpeg driver
 ```
 apt-get update
-apt-get install -y ffmpeg libavutil-dev libavcodec-dev libavformat-dev libswresample-dev libswscale-dev
+apt-get install -y ffmpeg
 ldconfig
 ```
 จากนั้น restart ComfyUI
