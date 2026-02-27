@@ -59,7 +59,6 @@ Install ffmpeg driver
 ```
 apt-get update
 apt-get install -y ffmpeg
-ldconfig
 ```
 จากนั้น restart ComfyUI
 
