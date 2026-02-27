@@ -55,7 +55,12 @@ git submodule update --init --recursive
 # ติดตั้ง dependency
 pip install -r requirements.txt
 ```
-
+Install ffmpeg driver
+```
+apt-get update
+apt-get install -y ffmpeg libavutil-dev libavcodec-dev libavformat-dev libswresample-dev libswscale-dev
+ldconfig
+```
 จากนั้น restart ComfyUI
 
 ---
