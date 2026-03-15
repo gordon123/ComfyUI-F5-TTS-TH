@@ -59,6 +59,15 @@ apt-get install -y gfortran libopenblas-dev liblapack-dev ffmpeg
 # ติดตั้ง dependency
 pip install -r requirements.txt
 ```
+
+```
+ถ้าเจอ compile error ตอนลง requirement ให้ลอง พิมพ์ แล้ว install requirement ใหม่
+apt-get update && sudo apt-get install -y gfortran pkg-config libopenblas-dev liblapack-dev
+
+ถ้าเจอ error opencv-python-headless 4.13.0.92 requires numpy>=2; ให้ ลด เวอชั่นลง
+pip install "opencv-python-headless<4.10"
+
+```
 จากนั้น restart ComfyUI
 
 ---
