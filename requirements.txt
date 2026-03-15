@@ -1,39 +1,41 @@
 # ===== Core TTS Requirements =====
-pythainlp==5.1.2
-deepcut==0.7.0.0
-omegaconf==2.3.0
-hf_xet==1.1.9
-vocos==0.1.0
-librosa==0.11.0
-soundfile==0.13.1
-pydub==0.25.1
-g2p_en==2.1.0
-jieba==0.42.1
-pypinyin==0.55.0
-transformers>=4.56.0,<4.60.0
-datasets==4.0.0
-tqdm==4.67.1
-numpy==1.26.4
-matplotlib==3.10.6
-protobuf==3.19.6
-accelerate==1.10.1
-bitsandbytes==0.47.0
-torch-time-stretch==1.0.3
-torchdiffeq==0.2.5
-ema_pytorch==0.7.7
-x_transformers==2.7.4
+pythainlp>=5.1.0
+deepcut>=0.7.0
+omegaconf>=2.3.0
+hf_xet>=1.1.0
+vocos>=0.1.0
+librosa>=0.10.0
+soundfile>=0.12.1
+pydub>=0.25.1
+g2p_en>=2.1.0
+jieba>=0.42.1
+pypinyin>=0.50.0
+# ขยายช่วง Transformers เพื่อไม่ให้ชนกับ ComfyUI เวอร์ชั่นใหม่ๆ
+transformers>=4.40.0
+datasets>=2.15.0
+tqdm>=4.66.0
+# ล็อค Numpy ไว้ที่ 1.26.x เพื่อป้องกันปัญหา Compatibility กับ Numpy 2.0
+numpy>=1.26.0,<2.0.0
+matplotlib>=3.8.0
+protobuf>=3.20.0
+accelerate>=0.28.0
+bitsandbytes>=0.42.0
+torch-time-stretch>=1.0.3
+torchdiffeq>=0.2.5
+ema_pytorch>=0.7.0
+x_transformers>=1.27.0
 
 # ===== Extra NLP Tools =====
-nltk==3.9.1
+nltk>=3.8.0
 antlr4-python3-runtime==4.9.3
-inflect==7.5.0
-distance==0.1.3
-loguru==0.7.3
-encodec==0.1.1
+inflect>=7.0.0
+distance>=0.1.3
+loguru>=0.7.0
+encodec>=0.1.1
 
 # ===== Dataset Dependencies =====
-pandas==2.2.3
-pyarrow>=14
+pandas>=2.0.0
+pyarrow>=14.0.0
 fsspec>=2023.6.0
 xxhash>=3.2.0
 dill>=0.3.8
@@ -48,8 +50,8 @@ contourpy>=1.3.1
 fonttools>=4.53.0
 
 # ===== Dev & Analytics =====
-wandb==0.21.3
+wandb>=0.16.0
 sentry-sdk>=2.0.0
-huggingface_hub>=0.34.0,<1.0
+huggingface_hub>=0.23.0
 hf_transfer
 wheel>=0.40.0
