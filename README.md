@@ -52,13 +52,12 @@ cd ComfyUI-F5-TTS-TH
 
 # ⚠️ สำคัญมาก: ต้อง init submodule
 git submodule update --init --recursive
+
+apt-get update
+apt-get install -y gfortran libopenblas-dev liblapack-dev ffmpeg
+
 # ติดตั้ง dependency
 pip install -r requirements.txt
-```
-Install ffmpeg driver
-```
-apt-get update
-apt-get install -y ffmpeg
 ```
 จากนั้น restart ComfyUI
 
