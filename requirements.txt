@@ -1,64 +1,66 @@
-# ===== Core AI & Compatibility (The Safe Zone) =====
+# ===== Core AI Stack (The Safe Zone) =====
 # ล็อค Numpy เพื่อป้องกัน Library เสียงพัง
-numpy>=1.26.4,<2.0.0 [cite: 1]
-# ล็อค Transformers 4.x เพื่อไม่ให้ชนกับ ComfyUI มาตรฐาน
-transformers>=4.41.0,<4.47.0 [cite: 1]
-# ป้องกันปัญหา ImportError: is_offline_mode
-huggingface-hub>=0.23.0,<1.0.0 [cite: 1]
+numpy>=1.26.4,<2.0.0
+# มาตรฐานหลักของ ComfyUI (เลี่ยงเวอร์ชั่น 5.x) 
+transformers>=4.41.0,<4.47.0
+# ป้องกันปัญหา ImportError: is_offline_mode 
+huggingface-hub>=0.23.0,<1.0.0
 # ลด Scipy เพื่อให้เข้ากับ Numpy 1.26.4
 scipy>=1.10.0,<1.13.0
 
-# ===== Core TTS Requirements =====
-pythainlp>=5.1.0 [cite: 1]
-deepcut>=0.7.0 [cite: 1]
-omegaconf>=2.3.0 [cite: 1]
-hf_xet>=1.1.0 [cite: 1]
-vocos>=0.1.0 [cite: 1]
-librosa>=0.10.0 [cite: 1]
-soundfile>=0.12.1 [cite: 1]
-pydub>=0.25.1 [cite: 1]
-g2p_en>=2.1.0 [cite: 1]
-jieba>=0.42.1 [cite: 1]
-pypinyin>=0.50.0 [cite: 1]
-datasets>=2.15.0 [cite: 1]
-tqdm>=4.66.0 [cite: 1]
-protobuf>=3.20.0 [cite: 1]
-accelerate>=0.28.0 [cite: 1]
-bitsandbytes>=0.42.0 [cite: 1]
-torch-time-stretch>=1.0.3 [cite: 1]
-torchdiffeq>=0.2.5 [cite: 1]
-ema_pytorch>=0.7.0 [cite: 1]
-x_transformers>=1.27.0 [cite: 1]
+# ===== Core TTS Requirements  =====
+pythainlp>=5.1.0
+deepcut>=0.7.0
+omegaconf>=2.3.0
+hf_xet>=1.1.0
+vocos>=0.1.0
+librosa>=0.10.0
+soundfile>=0.12.1
+pydub>=0.25.1
+g2p_en>=2.1.0
+jieba>=0.42.1
+pypinyin>=0.50.0
+datasets>=2.15.0
+tqdm>=4.66.0
+protobuf>=3.20.0
+accelerate>=0.28.0
+bitsandbytes>=0.42.0
+torch-time-stretch>=1.0.3
+torchdiffeq>=0.2.5
+ema_pytorch>=0.7.0
+x_transformers>=1.27.0
 
-# ===== Extra NLP Tools =====
-nltk>=3.8.0 [cite: 1]
-antlr4-python3-runtime==4.9.3 [cite: 1]
-inflect>=7.0.0 [cite: 1]
-distance>=0.1.3 [cite: 1]
-loguru>=0.7.0 [cite: 1]
-encodec>=0.1.1 [cite: 1]
+# ===== Extra NLP Tools  =====
+nltk>=3.8.0
+antlr4-python3-runtime==4.9.3
+inflect>=7.0.0
+distance>=0.1.3
+loguru>=0.7.0
+encodec>=0.1.1
 
-# ===== Dataset & Infra =====
-pandas>=2.0.0 [cite: 1]
-pyarrow>=14.0.0 [cite: 1]
-fsspec>=2023.6.0 [cite: 1]
-xxhash>=3.2.0 [cite: 1]
-dill>=0.3.8 [cite: 1]
-multiprocess>=0.70.15 [cite: 1]
-aiohttp>=3.8.5 [cite: 1]
+# ===== Dataset Dependencies  =====
+pandas>=2.0.0
+pyarrow>=14.0.0
+fsspec>=2023.6.0
+xxhash>=3.2.0
+dill>=0.3.8
+multiprocess>=0.70.15
+aiohttp>=3.8.5
+
+# ===== Matplotlib Dependencies (headless-safe)  =====
+pyparsing>=3.1.0
+cycler>=0.12.1
+kiwisolver>=1.4.5
+contourpy>=1.3.1
+fonttools>=4.53.0
 
 # ===== Graphics & Visuals (Headless Safe) =====
-# ล็อค OpenCV เพื่อไม่ให้มันบังคับลง Numpy 2.0
+# ล็อค OpenCV เพื่อไม่ให้บังคับใช้ Numpy 2.0
 opencv-python-headless>=4.0.0,<4.10.0
-matplotlib>=3.8.0 [cite: 1]
-pyparsing>=3.1.0 [cite: 1]
-cycler>=0.12.1 [cite: 1]
-kiwisolver>=1.4.5 [cite: 1]
-contourpy>=1.3.1 [cite: 1]
-fonttools>=4.53.0 [cite: 1]
+matplotlib>=3.8.0
 
-# ===== Dev & Analytics =====
-wandb>=0.16.0 [cite: 1]
-sentry-sdk>=2.0.0 [cite: 1]
-hf_transfer [cite: 1]
-wheel>=0.40.0 [cite: 1]
+# ===== Dev & Analytics  =====
+wandb>=0.16.0
+sentry-sdk>=2.0.0
+hf_transfer
+wheel>=0.40.0
