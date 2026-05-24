@@ -42,6 +42,9 @@ cd /workspace/ComfyUI/custom_nodes/ComfyUI-F5-TTS-TH/submodules/F5TTS-on-Pod/mod
 ---
 
 ### วิธีที่ 2: ติดตั้งแบบ Manual (คำสั่งสำหรับ Linux/Runpod - Windows ลองถาม chatGPT ดูนะครับ ผมไม่มี วินโดให้ทดลอง)
+
+สำหรับ Runpod ให้ เปิด terminal ใหม่ และอย่าลืม Activate VENV ใหม่
+
 ```bash
 cd ComfyUI/custom_nodes
 git clone https://github.com/gordon123/ComfyUI-F5-TTS-TH.git
