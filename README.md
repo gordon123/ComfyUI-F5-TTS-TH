@@ -36,11 +36,8 @@ cd /workspace/ComfyUI/custom_nodes/ComfyUI-F5-TTS-TH/submodules/F5TTS-on-Pod/mod
 ### วิธีที่ 1: ติดตั้งผ่าน ComfyUI-Manager (ง่ายสุด)
 1. เปิด ComfyUI
 2. ไปที่ **Manager → Custom Nodes**
-3. ค้นหา `ComfyUI-F5-TTS-TH`
-4. กด **Install**
-5. Restart ComfyUI
 
-ระบบจะดาวน์โหลดทุกอย่างให้อัตโนมัติ
+เวอชั่น ไม่ยอม  อัพเดท ใน custom manager, ใช้ manual install แทน !!
 
 ---
 
